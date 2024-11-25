@@ -23,18 +23,18 @@ app.Visible = True
 # feature = add_extrude_feature(com_def, ext_def)
 
 
-file = h5py.File('data/test_deepcad_cad_vec/0000/00005906.h5', 'r')
-vec = remove_padding(file['ground_truth'])
+file = h5py.File('data/predict_fusion360_cad_vec/20591_20e06209_0000.h5', 'r')
+# vec = remove_padding(file['ground_truth'])
 vec_out = remove_padding(file['out_vec'])
 
-cad = CADSequence.from_vector(vec, is_numerical=True, n=256)
-seq = cad.seq
+# cad = CADSequence.from_vector(vec, is_numerical=True, n=256)
+# seq = cad.seq
 cad_out = CADSequence.from_vector(vec_out, is_numerical=True, n=256)
 seq_out = cad_out.seq
 
 
-part_gt = create_inventor_model_from_sequence(seq, app)
-
+# part_gt = create_inventor_model_from_sequence(seq, app)
+#
 
 part_out = create_inventor_model_from_sequence(seq_out, app)
 

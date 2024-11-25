@@ -1,27 +1,28 @@
+from copy import copy
 from enum import Enum
 
 import numpy as np
 import win32com.client
 from win32com.client import constants
-from win32com.client.gencache import EnsureDispatch
 
 from cad_utils.curves import Line, Circle, Arc
 from cad_utils.macro import EXTENT_TYPE, EXTRUDE_OPERATIONS
+from win32com.client.gencache import EnsureDispatch
 
 
 def get_inventor_application():
     try:
         # Get the Inventor application object.
-
         inv_app = win32com.client.GetActiveObject("Inventor.Application")
         EnsureDispatch("Inventor.Application")
-    except:
+    except Exception as e:
         try:
-            print("Warning: Unable to get active Inventor.Application object.")
+            print("Warning: Unable to get active Inventor.Application object.", e)
             inv_app = win32com.client.Dispatch("Inventor.Application")
             EnsureDispatch("Inventor.Application")
-        except:
-            print("Error: Unable to get Inventor.Application object.")
+
+        except Exception as e:
+            print("Error: Unable to get Inventor.Application object.", e)
             return None
     return inv_app
 
@@ -32,6 +33,8 @@ def create_inventor_model_from_sequence(seq, app=None):
         ext_def = convert_to_extrude_inventor(com_def, extrude_op)
         feature = add_extrude_feature(com_def, ext_def)
     return part
+
+
 class ExtrudeType(Enum):
     Join = 1
     Cut = 2
@@ -131,9 +134,9 @@ def create_extrude_definition(com_def, profile, distance1, distance2,
 
 
 def convert_to_extrude_inventor(com_def, extrude_op):
-    profile = extrude_op.profile
+    profile = copy(extrude_op.profile)
     profile.denormalize(extrude_op.sketch_size)
-    sketch_plane = extrude_op.sketch_plane
+    sketch_plane = copy(extrude_op.sketch_plane)
     sketch_plane.origin = extrude_op.sketch_pos
 
     plane = add_work_plane(com_def, sketch_plane.origin,
@@ -209,12 +212,18 @@ def convert_to_inventor_profile(sketch_inventor, profile):
     for loop in profile.children:
         curves = []
         curves_inv = []
+
         for curve in loop.children:
             curve_inv = convert_to_inventor_curve(curve, sketch_inventor)
+            if curve_inv == -1:
+                continue
             if len(curves) != 0 and not isinstance(curve, Circle):
+                if isinstance(curves[-1], Circle):
+                    continue
                 curves_inv[-1].EndSketchPoint.Merge(curve_inv.StartSketchPoint)
             curves.append(curve)
             curves_inv.append(curve_inv)
+
         if not isinstance(curves[-1], Circle) and not isinstance(curves[0], Circle):
             curves_inv[0].StartSketchPoint.Merge(curves_inv[-1].EndSketchPoint)
 
