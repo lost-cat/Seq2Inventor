@@ -27,12 +27,10 @@ def get_inventor_application():
     return inv_app
 
 
-def create_inventor_model_from_sequence(seq, app=None):
-    part, com_def = add_part_document(app)
+def create_inventor_model_from_sequence(seq,com_def):
     for extrude_op in seq:
         ext_def = convert_to_extrude_inventor(com_def, extrude_op)
         feature = add_extrude_feature(com_def, ext_def)
-    return part
 
 
 class ExtrudeType(Enum):
@@ -70,12 +68,14 @@ class ExtrudeDirection(Enum):
         return ext_dir_inventor
 
 
-def add_part_document(app):
+def add_part_document(app,name):
     if app is None:
         app = get_inventor_application()
 
     part = app.Documents.Add(constants.kPartDocumentObject, "", True)
     part = win32com.client.CastTo(part, "PartDocument")
+    part.DisplayName = name
+    part
     com_def = part.ComponentDefinition
     return part, com_def
 
@@ -141,11 +141,19 @@ def convert_to_extrude_inventor(com_def, extrude_op):
 
     plane = add_work_plane(com_def, sketch_plane.origin,
                            sketch_plane.x_axis, sketch_plane.y_axis)
+    plane.Visible = False
     sketch_inventor = add_sketch(com_def, plane)
 
     profile_inventor = convert_to_inventor_profile(sketch_inventor, profile)
     extrude_type = convert_extrude_op_to_inventor(extrude_op.operation)
     extrude_dir = convert_extrude_dir_to_inventor(extrude_op.extent_type)
+    if extrude_dir != ExtrudeDirection.Symmetric and extrude_op.extent_one < 0:
+        extrude_op.extent_one = -extrude_op.extent_one
+        if extrude_dir == ExtrudeDirection.Positive:
+            extrude_dir = ExtrudeDirection.Negative
+        else:
+            extrude_dir = ExtrudeDirection.Positive
+    
 
     extrude_def = create_extrude_definition(com_def, profile_inventor, extrude_op.extent_one,
                                             extrude_op.extent_two,
@@ -236,5 +244,10 @@ def remove_padding(vec):
     commands = vec[:, 0].tolist()
     if 3 in commands:
         seq_len = commands.index(3)
-        vec = vec[:seq_len]
+        vec = vec[:seq_len+1]
     return vec
+
+# todo: implement this
+def save__inventor_document(doc, file_path):
+    doc.SaveAs(file_path, False)
+    pass
