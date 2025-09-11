@@ -91,10 +91,8 @@ def vec2inventor(vec, com_def) -> InventorModelStatus:
     return InventorModelStatus.SUCCESS
 
 
-def process_one(file_path,app , get_data_id = lambda x: os.path.join(
-            x.split("/")[-2], x.split("/")[-1].split(".")[0])):
-    data_id = get_data_id(file_path)
-    vec = load_vec(file_path, b_return_gt=False,name="vec")
+def process_one(file_path,app):
+    vec = load_vec(file_path, b_return_gt=False,name="out_vec")
     part, com_def = add_part_document(app, 'test')
     status = vec2inventor(vec, com_def)
     return status, part
@@ -189,7 +187,7 @@ def cherry_pick(app, data_dir, file, allowed_ext_count=3):
     with open(file, "r") as f:
         wished = json.load(f)
 
-    pbar = tqdm.tqdm(wished)
+    pbar = tqdm.tqdm(wished[600:700])
     selected = []
     for w in pbar:
         data_id = os.path.join(w.split("/")[-2], w.split("/")[-1].split(".")[0])
@@ -199,27 +197,15 @@ def cherry_pick(app, data_dir, file, allowed_ext_count=3):
         pbar.set_postfix({"Selected": len(selected)})
 
         with h5py.File(file_path, "r") as file:
-            vec = file["out_vec"]
+            vec_deepcad = file["out_vec"]
             vec_gt = file["ground_truth"]
-            vec = remove_padding(vec)
+            vec_deepcad = remove_padding(vec_deepcad)
             vec_gt = remove_padding(vec_gt)
-            ext_count = get_ext_count(vec)
+            ext_count = get_ext_count(vec_gt)
             if ext_count < allowed_ext_count:
                 continue
 
             selected.append(data_id)
-
-            try:
-                part, com_def = add_part_document(
-                    app, data_id.replace("\\", "_") + "_out"
-                )
-                cad_seq = CADSequence.from_vector(vec, is_numerical=True, n=256)
-                seq = cad_seq.seq
-                create_inventor_model_from_sequence(seq, com_def=com_def)
-            except Exception as e:
-                print("Error:", e, file_path)
-                part.Close(True)
-
             try:
                 part_gt, com_def_gt = add_part_document(
                     app, data_id.replace("\\", "_") + "_gt"
@@ -231,6 +217,35 @@ def cherry_pick(app, data_dir, file, allowed_ext_count=3):
             except Exception as e:
                 print("Error:", e, file_path)
                 part_gt.Close(True)
+                continue
+
+        
+            our_file = os.path.join( 'data/test_deepcad_cad_vec_NAT', data_id + ".h5")
+            with h5py.File(our_file, "r") as f:
+                vec_ours = f["out_vec"]
+                vec_ours = remove_padding(vec_ours)
+                try:
+                    part_ours, com_def_ours = add_part_document(
+                        app, data_id.replace("\\", "_") + "_o"
+                    )
+                    cad_seq_ours = CADSequence.from_vector(vec_ours, is_numerical=True, n=256)
+                    seq_ours = cad_seq_ours.seq
+                    create_inventor_model_from_sequence(seq_ours, com_def=com_def_ours)
+                except:
+                    print("Error:", file_path)
+                    part_ours.Close(True)
+                    continue
+            try:
+                    part, com_def = add_part_document(
+                        app, data_id.replace("\\", "_") + "_deepcad"
+                    )
+                    cad_seq = CADSequence.from_vector(vec_deepcad, is_numerical=True, n=256)
+                    seq = cad_seq.seq
+                    create_inventor_model_from_sequence(seq, com_def=com_def)
+            except Exception as e:
+                    print("Error:", e, file_path)
+                    part.Close(True)
+         
 
 
 if __name__ == "__main__":
@@ -241,5 +256,11 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     data_dir = args.data_dir
-    single_debug(app=app, file_path=os.path.join(data_dir, "0004/00045203.h5"))
-    # cherry_pick(app,args.data_dir,'data/wished.json')
+    save_dir = 'F:/inventor'
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+    
+    # status,part = process_one(file_path=os.path.join(data_dir, "0004/00045203.h5"),app=app)
+    # # save__inventor_document(part, os.path.join(save_dir, "00045203.ipt"))
+    # single_debug(app=app, file_path=os.path.join(data_dir, "0004/00045203.h5"))
+    cherry_pick(app,args.data_dir,'data/wished.json')
