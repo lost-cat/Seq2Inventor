@@ -11,46 +11,6 @@ from cad_utils.macro import EXT_IDX
 from inventor_util import *
 from enum import Enum
 
-#
-#
-# p1 = transient_point_2d(app, 0, 0)
-# p2 = transient_point_2d(app, 1, 0)
-# p3 = transient_point_2d(app, 1, 1)
-# p4 = transient_point_2d(app, 0, 1)
-#
-# line1 = add_sketch2d_line(sketch_inventor, p1, p2)
-# line2 = add_sketch2d_line(sketch_inventor, line1.EndSketchPoint, p3)
-# line3 = add_sketch2d_line(sketch_inventor, line2.EndSketchPoint, p4)
-# line4 = add_sketch2d_line(sketch_inventor, line3.EndSketchPoint, p1)
-# line4.EndSketchPoint.Merge(line1.StartSketchPoint)
-# profile = add_profile(sketch_inventor)
-# ext_def = create_extrude_definition(com_def, profile, 3, ExtrudeType.NewBody,
-#                                     ExtrudeDirection.Positive)
-# feature = add_extrude_feature(com_def, ext_def)
-
-
-# file = h5py.File('data/predict_fusion360_cad_vec/20591_20e06209_0000.h5', 'r')
-# # vec = remove_padding(file['ground_truth'])
-# vec_out = remove_padding(file['out_vec'])
-
-# # cad = CADSequence.from_vector(vec, is_numerical=True, n=256)
-# # seq = cad.seq
-# cad_out = CADSequence.from_vector(vec_out, is_numerical=True, n=256)
-# seq_out = cad_out.seq
-
-
-# # part_gt = create_inventor_model_from_sequence(seq, app)
-# #
-
-# part_out = create_inventor_model_from_sequence(seq_out, app)
-# app.ActiveView.Fit()
-
-
-# input("Press Enter to continue...")
-# part_out.Close(True)
-# file.close()
-
-
 class InventorModelStatus(Enum):
     VEC_CONVERSION_FAILED = "Vector conversion failed"
     INVENTOR_API_CALL_FAILED = "Inventor API call failed"
@@ -183,11 +143,13 @@ def get_ext_count(vec):
     return ext_count
 
 
-def cherry_pick(app, data_dir, file, allowed_ext_count=3):
+def cherry_pick(app, data_dir, file, allowed_ext_count=3, start_idx=0, end_idx=None):
     with open(file, "r") as f:
         wished = json.load(f)
 
-    pbar = tqdm.tqdm(wished[600:700])
+    if end_idx is None:
+        end_idx = len(wished)
+    pbar = tqdm.tqdm(wished[start_idx:end_idx])
     selected = []
     for w in pbar:
         data_id = os.path.join(w.split("/")[-2], w.split("/")[-1].split(".")[0])
@@ -260,7 +222,5 @@ if __name__ == "__main__":
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
     
-    # status,part = process_one(file_path=os.path.join(data_dir, "0004/00045203.h5"),app=app)
-    # # save__inventor_document(part, os.path.join(save_dir, "00045203.ipt"))
-    # single_debug(app=app, file_path=os.path.join(data_dir, "0004/00045203.h5"))
-    cherry_pick(app,args.data_dir,'data/wished.json')
+    # You can now specify start_idx and end_idx for cherry_pick, e.g.:
+    cherry_pick(app, args.data_dir, 'data/wished.json', start_idx=600, end_idx=700)

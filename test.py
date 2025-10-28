@@ -102,7 +102,7 @@ if __name__ == "__main__":
 
 
   
-    # print(feature1.Faces.Count)
+    print(feature1.Faces.Count)
     start_face2 = feature.EndFaces.Item(1)
 
     # Create a new sketch on the end face

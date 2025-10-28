@@ -1,0 +1,18 @@
+{
+    "configurations": [
+        {
+            "name": "SequenceExtract",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${cwd}/sequence_extract.py"
+        },
+            {
+            "name": "reconstruct_from_json",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${cwd}/reconstruct_from_json.py",
+            "args": "E:\\Python\\PyProjects\\Seq2Inventor\\features_test_inventor_0.json"
+            
+        },
+    ]
+}

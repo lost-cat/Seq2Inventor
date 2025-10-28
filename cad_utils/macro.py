@@ -1,14 +1,17 @@
 import numpy as np
 
-ALL_COMMANDS = ['Line', 'Arc', 'Circle', 'EOS', 'SOL', 'Ext']
+ALL_COMMANDS = ['Line', 'Arc', 'Circle', 'EOS', 'SOL', 'Ext','Revolve','Fillet','Chamfer']
 LINE_IDX = ALL_COMMANDS.index('Line')
 ARC_IDX = ALL_COMMANDS.index('Arc')
 CIRCLE_IDX = ALL_COMMANDS.index('Circle')
 EOS_IDX = ALL_COMMANDS.index('EOS')
 SOL_IDX = ALL_COMMANDS.index('SOL')
 EXT_IDX = ALL_COMMANDS.index('Ext')
+REVOLVE_IDX = ALL_COMMANDS.index('Revolve')
+FILLET_IDX = ALL_COMMANDS.index('Fillet')
+CHAMFER_IDX = ALL_COMMANDS.index('Chamfer')
 
-EXTRUDE_OPERATIONS = ["NewBodyFeatureOperation", "JoinFeatureOperation",
+BODY_OPERATIONS = ["NewBodyFeatureOperation", "JoinFeatureOperation",
                       "CutFeatureOperation", "IntersectFeatureOperation"]
 EXTENT_TYPE = ["OneSideFeatureExtentType", "SymmetricFeatureExtentType",
                "TwoSidesFeatureExtentType"]

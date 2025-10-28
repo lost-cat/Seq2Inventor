@@ -1,0 +1,873 @@
+[
+  {
+    "ReferenceKey": "EAIAABAAAAAFAQAAAAAAAIAAAAAAAAAA",
+    "type": "ExtrudeFeature",
+    "name": "拉伸1",
+    "operation": "kNewBodyOperation",
+    "extentType": "kDistanceExtent",
+    "distance": {
+      "name": "d0",
+      "value": 20.0,
+      "expression": "200 mm",
+      "valueType": "kNominalValue"
+    },
+    "direction": "kPositiveExtentDirection",
+    "distanceTwo": {
+      "name": "d14",
+      "value": 10.0,
+      "expression": "100.000 mm",
+      "valueType": "kNominalValue"
+    },
+    "directionTwo": "kPositiveExtentDirection",
+    "profile": {
+      "ReferenceKey": "EAIAABAAAAD0DwAAAAAAAIAAAAAAAAAA",
+      "sketchName": "Sketch_1",
+      "SketchPlane": {
+        "geometry": {
+          "origin": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "normal": {
+            "x": 1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "axis_x": {
+            "x": 0.0,
+            "y": 1.0,
+            "z": 0.0
+          },
+          "axis_y": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 1.0
+          }
+        },
+        "index": null
+      },
+      "ProfilePaths": [
+        {
+          "ReferenceKey": "EAIAABAAAAD1DwAAAAAAAIAAAAAAAAAA",
+          "Closed": true,
+          "IsTextBoxPath": false,
+          "EntityCount": 20,
+          "PathEntities": [
+            {
+              "ReferenceKey": "EAIAABAAAAD2DwAAAAAAAIAAAAAAAAAA",
+              "CurveType": "kCircularArcCurve2d",
+              "StartSketchPoint": {
+                "x": 0.20729900762261,
+                "y": 1.6944772040846001
+              },
+              "EndSketchPoint": {
+                "x": -0.15000000000000002,
+                "y": 1.4000000000000001
+              },
+              "Curve": {
+                "type": "Arc2d",
+                "center": {
+                  "x": 0.15000000000006608,
+                  "y": 1.3999999999999524
+                },
+                "radius": 0.300000000000066,
+                "startAngle": 1.3786188957604264,
+                "sweepAngle": 1.7629737578292077
+              }
+            },
+            {
+              "ReferenceKey": "EAIAABAAAAD3DwAAAAAAAIAAAAAAAAAA",
+              "CurveType": "kLineSegmentCurve2d",
+              "StartSketchPoint": {
+                "x": -0.15000000000000002,
+                "y": 1.4000000000000001
+              },
+              "EndSketchPoint": {
+                "x": -0.15000000000000002,
+                "y": -1.4000000000000001
+              },
+              "Curve": {
+                "type": "LineSegment2d",
+                "start": {
+                  "x": -0.15000000000000002,
+                  "y": 1.4000000000000001
+                },
+                "end": {
+                  "x": -0.15000000000000002,
+                  "y": -1.4000000000000001
+                },
+                "direction": {
+                  "x": 0.0,
+                  "y": -1.0
+                }
+              }
+            },
+            {
+              "ReferenceKey": "EAIAABAAAAD4DwAAAAAAAIAAAAAAAAAA",
+              "CurveType": "kCircularArcCurve2d",
+              "StartSketchPoint": {
+                "x": -0.15000000000000002,
+                "y": -1.4000000000000001
+              },
+              "EndSketchPoint": {
+                "x": 0.20729900762261,
+                "y": -1.6944772040846001
+              },
+              "Curve": {
+                "type": "Arc2d",
+                "center": {
+                  "x": 0.15000000000006608,
+                  "y": -1.3999999999999524
+                },
+                "radius": 0.3000000000000661,
+                "startAngle": 3.141592653589952,
+                "sweepAngle": 1.762973757829208
+              }
+            },
+            {
+              "ReferenceKey": "EAIAABAAAAD5DwAAAAAAAIAAAAAAAAAA",
+              "CurveType": "kLineSegmentCurve2d",
+              "StartSketchPoint": {
+                "x": 0.20729900762261,
+                "y": -1.6944772040846001
+              },
+              "EndSketchPoint": {
+                "x": 1.1372990076226,
+                "y": -1.5135189623263001
+              },
+              "Curve": {
+                "type": "LineSegment2d",
+                "start": {
+                  "x": 0.20729900762261,
+                  "y": -1.6944772040846001
+                },
+                "end": {
+                  "x": 1.1372990076226,
+                  "y": -1.5135189623263001
+                },
+                "direction": {
+                  "x": 0.9815906802818809,
+                  "y": 0.19099669207542438
+                }
+              }
+            },
+            {
+              "ReferenceKey": "EAIAABAAAAD6DwAAAAAAAIAAAAAAAAAA",
+              "CurveType": "kCircularArcCurve2d",
+              "StartSketchPoint": {
+                "x": 1.1372990076226,
+                "y": -1.5135189623263001
+              },
+              "EndSketchPoint": {
+                "x": 1.3800000000000001,
+                "y": -1.2190417582418
+              },
+              "Curve": {
+                "type": "Arc2d",
+                "center": {
+                  "x": 1.0800000000000654,
+                  "y": -1.219041758241784
+                },
+                "radius": 0.29999999999993493,
+                "startAngle": 4.904566411419213,
+                "sweepAngle": 1.3786188957603196
+              }
+            },
+            {
+              "ReferenceKey": "EAIAABAAAAD7DwAAAAAAAIAAAAAAAAAA",
+              "CurveType": "kLineSegmentCurve2d",
+              "StartSketchPoint": {
+                "x": 1.3800000000000001,
+                "y": -1.2190417582418
+              },
+              "EndSketchPoint": {
+                "x": 1.3800000000000001,
+                "y": -0.8250000000000001
+              },
+              "Curve": {
+                "type": "LineSegment2d",
+                "start": {
+                  "x": 1.3800000000000001,
+                  "y": -1.2190417582418
+                },
+                "end": {
+                  "x": 1.3800000000000001,
+                  "y": -0.8250000000000001
+                },
+                "direction": {
+                  "x": 0.0,
+                  "y": 1.0
+                }
+              }
+            },
+            {
+              "ReferenceKey": "EAIAABAAAAD8DwAAAAAAAIAAAAAAAAAA",
+              "CurveType": "kLineSegmentCurve2d",
+              "StartSketchPoint": {
+                "x": 1.3800000000000001,
+                "y": -0.8250000000000001
+              },
+              "EndSketchPoint": {
+                "x": 1.2300000000000002,
+                "y": -0.8250000000000001
+              },
+              "Curve": {
+                "type": "LineSegment2d",
+                "start": {
+                  "x": 1.3800000000000001,
+                  "y": -0.8250000000000001
+                },
+                "end": {
+                  "x": 1.2300000000000002,
+                  "y": -0.8250000000000001
+                },
+                "direction": {
+                  "x": -1.0,
+                  "y": 0.0
+                }
+              }
+            },
+            {
+              "ReferenceKey": "EAIAABAAAAD9DwAAAAAAAIAAAAAAAAAA",
+              "CurveType": "kLineSegmentCurve2d",
+              "StartSketchPoint": {
+                "x": 1.2300000000000002,
+                "y": -0.8250000000000001
+              },
+              "EndSketchPoint": {
+                "x": 1.2300000000000002,
+                "y": -1.2190417582418
+              },
+              "Curve": {
+                "type": "LineSegment2d",
+                "start": {
+                  "x": 1.2300000000000002,
+                  "y": -0.8250000000000001
+                },
+                "end": {
+                  "x": 1.2300000000000002,
+                  "y": -1.2190417582418
+                },
+                "direction": {
+                  "x": 0.0,
+                  "y": -1.0
+                }
+              }
+            },
+            {
+              "ReferenceKey": "EAIAABAAAAD+DwAAAAAAAIAAAAAAAAAA",
+              "CurveType": "kCircularArcCurve2d",
+              "StartSketchPoint": {
+                "x": 1.2300000000000002,
+                "y": -1.2190417582418
+              },
+              "EndSketchPoint": {
+                "x": 1.1086495038113,
+                "y": -1.3662803602840001
+              },
+              "Curve": {
+                "type": "Arc2d",
+                "center": {
+                  "x": 1.0800000000002705,
+                  "y": -1.219041758241938
+                },
+                "radius": 0.14999999999972968,
+                "startAngle": 9.192646643896296e-13,
+                "sweepAngle": -1.3786188957625995
+              }
+            },
+            {
+              "ReferenceKey": "EAIAABAAAAD/DwAAAAAAAIAAAAAAAAAA",
+              "CurveType": "kLineSegmentCurve2d",
+              "StartSketchPoint": {
+                "x": 1.1086495038113,
+                "y": -1.3662803602840001
+              },
+              "EndSketchPoint": {
+                "x": 0.17864950381130001,
+                "y": -1.5472386020423001
+              },
+              "Curve": {
+                "type": "LineSegment2d",
+                "start": {
+                  "x": 1.1086495038113,
+                  "y": -1.3662803602840001
+                },
+                "end": {
+                  "x": 0.17864950381130007,
+                  "y": -1.5472386020423001
+                },
+                "direction": {
+                  "x": -0.9815906802818811,
+                  "y": -0.1909966920754224
+                }
+              }
+            },
+            {
+              "ReferenceKey": "EAIAABAAAAAAEAAAAAAAAIAAAAAAAAAA",
+              "CurveType": "kCircularArcCurve2d",
+              "StartSketchPoint": {
+                "x": 0.17864950381130001,
+                "y": -1.5472386020423001
+              },
+              "EndSketchPoint": {
+                "x": 0.0,
+                "y": -1.4000000000000001
+              },
+              "Curve": {
+                "type": "Arc2d",
+                "center": {
+                  "x": 0.1499999999999638,
+                  "y": -1.4000000000000592
+                },
+                "radius": 0.14999999999996386,
+                "startAngle": 4.904566411419686,
+                "sweepAngle": -1.7629737578302862
+              }
+            },
+            {
+              "ReferenceKey": "EAIAABAAAAABEAAAAAAAAIAAAAAAAAAA",
+              "CurveType": "kLineSegmentCurve2d",
+              "StartSketchPoint": {
+                "x": 0.0,
+                "y": -1.4000000000000001
+              },
+              "EndSketchPoint": {
+                "x": 0.0,
+                "y": 1.4000000000000001
+              },
+              "Curve": {
+                "type": "LineSegment2d",
+                "start": {
+                  "x": 0.0,
+                  "y": -1.4000000000000001
+                },
+                "end": {
+                  "x": 0.0,
+                  "y": 1.4000000000000001
+                },
+                "direction": {
+                  "x": 0.0,
+                  "y": 1.0
+                }
+              }
+            },
+            {
+              "ReferenceKey": "EAIAABAAAAACEAAAAAAAAIAAAAAAAAAA",
+              "CurveType": "kCircularArcCurve2d",
+              "StartSketchPoint": {
+                "x": 0.0,
+                "y": 1.4000000000000001
+              },
+              "EndSketchPoint": {
+                "x": 0.17864950381130001,
+                "y": 1.5472386020423001
+              },
+              "Curve": {
+                "type": "Arc2d",
+                "center": {
+                  "x": 0.14999999999996488,
+                  "y": 1.4000000000000579
+                },
+                "radius": 0.14999999999996488,
+                "startAngle": 3.141592653590178,
+                "sweepAngle": -1.7629737578302689
+              }
+            },
+            {
+              "ReferenceKey": "EAIAABAAAAADEAAAAAAAAIAAAAAAAAAA",
+              "CurveType": "kLineSegmentCurve2d",
+              "StartSketchPoint": {
+                "x": 0.17864950381130001,
+                "y": 1.5472386020423001
+              },
+              "EndSketchPoint": {
+                "x": 1.1086495038113,
+                "y": 1.3662803602840001
+              },
+              "Curve": {
+                "type": "LineSegment2d",
+                "start": {
+                  "x": 0.17864950381130001,
+                  "y": 1.5472386020423001
+                },
+                "end": {
+                  "x": 1.1086495038113,
+                  "y": 1.3662803602840001
+                },
+                "direction": {
+                  "x": 0.9815906802818811,
+                  "y": -0.1909966920754224
+                }
+              }
+            },
+            {
+              "ReferenceKey": "EAIAABAAAAAEEAAAAAAAAIAAAAAAAAAA",
+              "CurveType": "kCircularArcCurve2d",
+              "StartSketchPoint": {
+                "x": 1.1086495038113,
+                "y": 1.3662803602840001
+              },
+              "EndSketchPoint": {
+                "x": 1.2300000000000002,
+                "y": 1.2190417582418
+              },
+              "Curve": {
+                "type": "Arc2d",
+                "center": {
+                  "x": 1.0800000000002705,
+                  "y": 1.219041758241938
+                },
+                "radius": 0.14999999999972985,
+                "startAngle": 1.3786188957616794,
+                "sweepAngle": -1.3786188957625995
+              }
+            },
+            {
+              "ReferenceKey": "EAIAABAAAAAFEAAAAAAAAIAAAAAAAAAA",
+              "CurveType": "kLineSegmentCurve2d",
+              "StartSketchPoint": {
+                "x": 1.2300000000000002,
+                "y": 1.2190417582418
+              },
+              "EndSketchPoint": {
+                "x": 1.2300000000000002,
+                "y": 0.8250000000000001
+              },
+              "Curve": {
+                "type": "LineSegment2d",
+                "start": {
+                  "x": 1.2300000000000002,
+                  "y": 1.2190417582418
+                },
+                "end": {
+                  "x": 1.2300000000000002,
+                  "y": 0.8250000000000001
+                },
+                "direction": {
+                  "x": 0.0,
+                  "y": -1.0
+                }
+              }
+            },
+            {
+              "ReferenceKey": "EAIAABAAAAAGEAAAAAAAAIAAAAAAAAAA",
+              "CurveType": "kLineSegmentCurve2d",
+              "StartSketchPoint": {
+                "x": 1.2300000000000002,
+                "y": 0.8250000000000001
+              },
+              "EndSketchPoint": {
+                "x": 1.3800000000000001,
+                "y": 0.8250000000000001
+              },
+              "Curve": {
+                "type": "LineSegment2d",
+                "start": {
+                  "x": 1.2300000000000002,
+                  "y": 0.8250000000000001
+                },
+                "end": {
+                  "x": 1.3800000000000001,
+                  "y": 0.8250000000000001
+                },
+                "direction": {
+                  "x": 1.0,
+                  "y": 0.0
+                }
+              }
+            },
+            {
+              "ReferenceKey": "EAIAABAAAAAHEAAAAAAAAIAAAAAAAAAA",
+              "CurveType": "kLineSegmentCurve2d",
+              "StartSketchPoint": {
+                "x": 1.3800000000000001,
+                "y": 0.8250000000000001
+              },
+              "EndSketchPoint": {
+                "x": 1.3800000000000001,
+                "y": 1.2190417582418
+              },
+              "Curve": {
+                "type": "LineSegment2d",
+                "start": {
+                  "x": 1.3800000000000001,
+                  "y": 0.8250000000000001
+                },
+                "end": {
+                  "x": 1.3800000000000001,
+                  "y": 1.2190417582418
+                },
+                "direction": {
+                  "x": 0.0,
+                  "y": 1.0
+                }
+              }
+            },
+            {
+              "ReferenceKey": "EAIAABAAAAAIEAAAAAAAAIAAAAAAAAAA",
+              "CurveType": "kCircularArcCurve2d",
+              "StartSketchPoint": {
+                "x": 1.3800000000000001,
+                "y": 1.2190417582418
+              },
+              "EndSketchPoint": {
+                "x": 1.1372990076226,
+                "y": 1.5135189623263001
+              },
+              "Curve": {
+                "type": "Arc2d",
+                "center": {
+                  "x": 1.0800000000000651,
+                  "y": 1.219041758241784
+                },
+                "radius": 0.299999999999935,
+                "startAngle": 5.329070518201906e-14,
+                "sweepAngle": 1.3786188957603192
+              }
+            },
+            {
+              "ReferenceKey": "EAIAABAAAAAJEAAAAAAAAIAAAAAAAAAA",
+              "CurveType": "kLineSegmentCurve2d",
+              "StartSketchPoint": {
+                "x": 1.1372990076226,
+                "y": 1.5135189623263001
+              },
+              "EndSketchPoint": {
+                "x": 0.20729900762261,
+                "y": 1.6944772040846001
+              },
+              "Curve": {
+                "type": "LineSegment2d",
+                "start": {
+                  "x": 1.1372990076226,
+                  "y": 1.5135189623263001
+                },
+                "end": {
+                  "x": 0.20729900762261,
+                  "y": 1.6944772040846001
+                },
+                "direction": {
+                  "x": -0.9815906802818809,
+                  "y": 0.19099669207542438
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "ReferenceKey": "EAIAABAAAABOBQAAAAAAAIAAAAAAAAAA",
+    "type": "ExtrudeFeature",
+    "name": "拉伸2",
+    "operation": "kJoinOperation",
+    "extentType": "kDistanceExtent",
+    "distance": {
+      "name": "d4",
+      "value": 3.8000000000000003,
+      "expression": "38.000 mm",
+      "valueType": "kNominalValue"
+    },
+    "direction": "kPositiveExtentDirection",
+    "profile": {
+      "ReferenceKey": "EAIAABAAAABIBQAAAAAAAIAAAAAAAAAA",
+      "sketchName": "草图2",
+      "SketchPlane": {
+        "geometry": {
+          "origin": {
+            "x": -10.0,
+            "y": -0.15000000000000002,
+            "z": -1.4000000000000001
+          },
+          "normal": {
+            "x": 0.0,
+            "y": -1.0,
+            "z": 0.0
+          },
+          "axis_x": {
+            "x": 1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "axis_y": {
+            "x": -0.0,
+            "y": 0.0,
+            "z": 1.0
+          }
+        },
+        "index": {
+          "surfaceBodyIndex": 1,
+          "faceIndex": 2,
+          "featureName": "拉伸1"
+        }
+      },
+      "ProfilePaths": [
+        {
+          "ReferenceKey": "EAIAABAAAABKBQAAAAAAAIAAAAAAAAAA",
+          "Closed": true,
+          "IsTextBoxPath": false,
+          "EntityCount": 1,
+          "PathEntities": [
+            {
+              "ReferenceKey": "EAIAABAAAABJBQAAAAAAAIAAAAAAAAAA",
+              "CurveType": "kCircleCurve2d",
+              "Curve": {
+                "type": "CircleCurve2d",
+                "center": {
+                  "x": 2.6559991526876843,
+                  "y": 1.0828657370326333
+                },
+                "radius": 1.9726156830851065
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "ReferenceKey": "EAIAABAAAAAjBgAAAAAAAIAAAAAAAAAA",
+    "type": "FilletFeature",
+    "name": "圆角1",
+    "featureType": "FilletFeature",
+    "filletType": "kEdgeFillet",
+    "edgeSets": [
+      {
+        "radius": {
+          "name": "d6",
+          "value": 0.2,
+          "expression": "2 mm",
+          "valueType": "kNominalValue"
+        },
+        "edges": [
+          {
+            "surfaceBodyIndex": 1,
+            "edgeIndex": 5,
+            "featureName": "拉伸1"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "ReferenceKey": "EAIAABAAAAA0CQAAAAAAAIAAAAAAAAAA",
+    "type": "ExtrudeFeature",
+    "name": "拉伸3",
+    "operation": "kJoinOperation",
+    "extentType": "kDistanceExtent",
+    "distance": {
+      "name": "d7",
+      "value": 1.0,
+      "expression": "10 mm",
+      "valueType": "kNominalValue"
+    },
+    "direction": "kPositiveExtentDirection",
+    "profile": {
+      "ReferenceKey": "EAIAABAAAAAuCQAAAAAAAIAAAAAAAAAA",
+      "sketchName": "草图3",
+      "SketchPlane": {
+        "geometry": {
+          "origin": {
+            "x": 20.0,
+            "y": -0.15000000000000002,
+            "z": -1.4000000000000001
+          },
+          "normal": {
+            "x": 0.0,
+            "y": -1.0,
+            "z": 0.0
+          },
+          "axis_x": {
+            "x": 1.0,
+            "y": 0.0,
+            "z": -0.0
+          },
+          "axis_y": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 1.0
+          }
+        },
+        "index": {
+          "surfaceBodyIndex": 1,
+          "faceIndex": 6,
+          "featureName": "拉伸1"
+        }
+      },
+      "ProfilePaths": [
+        {
+          "ReferenceKey": "EAIAABAAAAAwCQAAAAAAAIAAAAAAAAAA",
+          "Closed": true,
+          "IsTextBoxPath": false,
+          "EntityCount": 1,
+          "PathEntities": [
+            {
+              "ReferenceKey": "EAIAABAAAAAvCQAAAAAAAIAAAAAAAAAA",
+              "CurveType": "kCircleCurve2d",
+              "Curve": {
+                "type": "CircleCurve2d",
+                "center": {
+                  "x": -2.720126070651883,
+                  "y": 1.4000000000000001
+                },
+                "radius": 1.2491761196501177
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "ReferenceKey": "EAIAABAAAAAVCgAAAAAAAIAAAAAAAAAA",
+    "type": "ChamferFeature",
+    "name": "倒角1",
+    "featureType": "ChamferFeature",
+    "chamferType": "kDistance",
+    "distance": {
+      "name": "d9",
+      "value": 0.2,
+      "expression": "2 mm",
+      "valueType": "kNominalValue"
+    },
+    "edges": [
+      {
+        "surfaceBodyIndex": 1,
+        "edgeIndex": 1,
+        "featureName": "拉伸1"
+      }
+    ]
+  },
+  {
+    "ReferenceKey": "EAIAABAAAAABDwAAAAAAAIAAAAAAAAAA",
+    "type": "ExtrudeFeature",
+    "name": "拉伸4",
+    "operation": "kJoinOperation",
+    "extentType": "kDistanceExtent",
+    "distance": {
+      "name": "d12",
+      "value": 1.0,
+      "expression": "10 mm",
+      "valueType": "kNominalValue"
+    },
+    "direction": "kPositiveExtentDirection",
+    "profile": {
+      "ReferenceKey": "EAIAABAAAAD7DgAAAAAAAIAAAAAAAAAA",
+      "sketchName": "草图4",
+      "SketchPlane": {
+        "geometry": {
+          "origin": {
+            "x": -10.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "normal": {
+            "x": -1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "axis_x": {
+            "x": 0.0,
+            "y": -0.0,
+            "z": 1.0
+          },
+          "axis_y": {
+            "x": 0.0,
+            "y": 1.0,
+            "z": 0.0
+          }
+        },
+        "index": {
+          "surfaceBodyIndex": 1,
+          "faceIndex": 11,
+          "featureName": "拉伸1"
+        }
+      },
+      "ProfilePaths": [
+        {
+          "ReferenceKey": "EAIAABAAAAD9DgAAAAAAAIAAAAAAAAAA",
+          "Closed": true,
+          "IsTextBoxPath": false,
+          "EntityCount": 1,
+          "PathEntities": [
+            {
+              "ReferenceKey": "EAIAABAAAAD8DgAAAAAAAIAAAAAAAAAA",
+              "CurveType": "kCircleCurve2d",
+              "Curve": {
+                "type": "CircleCurve2d",
+                "center": {
+                  "x": 1.1943649706129007,
+                  "y": 0.5122961777722559
+                },
+                "radius": 0.5663786754397997
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "ReferenceKey": "EAIAABAAAACbFAAAAAAAAIAAAAAAAAAA",
+    "type": "ChamferFeature",
+    "name": "倒角2",
+    "featureType": "ChamferFeature",
+    "chamferType": "kDistance",
+    "distance": {
+      "name": "d16",
+      "value": 0.1,
+      "expression": "1 mm",
+      "valueType": "kNominalValue"
+    },
+    "edges": [
+      {
+        "surfaceBodyIndex": 1,
+        "edgeIndex": 14,
+        "featureName": "拉伸1"
+      },
+      {
+        "surfaceBodyIndex": 1,
+        "edgeIndex": 14,
+        "featureName": "拉伸1"
+      },
+      {
+        "surfaceBodyIndex": 1,
+        "edgeIndex": 14,
+        "featureName": "拉伸1"
+      },
+      {
+        "surfaceBodyIndex": 1,
+        "edgeIndex": 14,
+        "featureName": "拉伸1"
+      },
+      {
+        "surfaceBodyIndex": 1,
+        "edgeIndex": 14,
+        "featureName": "拉伸1"
+      },
+      {
+        "surfaceBodyIndex": 1,
+        "edgeIndex": 14,
+        "featureName": "拉伸1"
+      },
+      {
+        "surfaceBodyIndex": 1,
+        "edgeIndex": 14,
+        "featureName": "拉伸1"
+      },
+      {
+        "surfaceBodyIndex": 1,
+        "edgeIndex": 14,
+        "featureName": "拉伸1"
+      },
+      {
+        "surfaceBodyIndex": 1,
+        "edgeIndex": 14,
+        "featureName": "拉伸1"
+      }
+    ]
+  }
+]
