@@ -29,12 +29,15 @@ class CurveType(Enum):
     kLineSegmentCurve2d = 5251  # Curve2d line segment type.
     kPolylineCurve2d = 5257     # Curve2d polyline type.
     kUnknownCurve2d = 5249      # Curve2d unknown type.
-
+    
+key_context = None
 
 def get_reference_key_str(entity):
+    global key_context
     part = entity.Application.ActiveDocument
     reference_manager = part.ReferenceKeyManager
-    key_context = reference_manager.CreateKeyContext()
+    if key_context is None:
+        key_context = reference_manager.CreateKeyContext()
     key = get_reference_key(entity, key_context)
     key_str = get_string_reference_key(key, reference_manager)
     return key_str
@@ -135,7 +138,7 @@ def edge_canonical_key(edge, tol: float = 1e-3):
         ends,
     )
 
-def face_canonical_key(face, tol: float = 1e-6):
+def face_canonical_key(face, tol: float = 1e-3):
     """跨文档可复现的 Face 排序键"""
     st = None; area = 0.0; centroid = (0,0,0); orient = (0,0,0); extra = (0.0,)
     try:
@@ -166,14 +169,14 @@ def face_canonical_key(face, tol: float = 1e-6):
     except Exception:
         pass
     return (
-        int(st) if st is not None else -1,
         _round_val(area, tol),
         centroid,
         orient,
         extra,
+        int(st) if st is not None else -1,
     )
 
-def body_canonical_key(body, tol: float = 1e-6):
+def body_canonical_key(body, tol: float = 1e-3):
     """
     跨文档可复现的 SurfaceBody 排序键（体积、面积、质心、包围盒尺寸、面/边数量、少量面类型快照）。
     """
@@ -226,7 +229,7 @@ def body_canonical_key(body, tol: float = 1e-6):
     return (vol, area, centroid, bbox, nf, ne, tuple(face_types))
 
 
-def stable_sorted_edges(doc, body, tol: float = 1e-6, prefer_refkey: bool = True):
+def stable_sorted_edges(body, tol: float = 1e-3, prefer_refkey: bool = False):
     """返回该 body 的 Edges 按稳定键排序的列表。"""
     edges = [body.Edges.Item(i) for i in range(1, getattr(body.Edges, "Count", 0)+1)]
     if prefer_refkey:
@@ -239,7 +242,7 @@ def stable_sorted_edges(doc, body, tol: float = 1e-6, prefer_refkey: bool = True
     return sorted(edges, key=lambda e: edge_canonical_key(e, tol))
 
 
-def stable_sorted_faces(body, tol: float = 1e-6, prefer_refkey: bool = False):
+def stable_sorted_faces(body, tol: float = 1e-3, prefer_refkey: bool = False):
     faces = [body.Faces.Item(i) for i in range(1, getattr(body.Faces, "Count", 0)+1)]
     if prefer_refkey:
         try:
@@ -248,7 +251,7 @@ def stable_sorted_faces(body, tol: float = 1e-6, prefer_refkey: bool = False):
             pass
     return sorted(faces, key=lambda f: face_canonical_key(f, tol))
 
-def stable_sorted_bodies(feature, tol: float = 1e-6, prefer_refkey: bool = False):
+def stable_sorted_bodies(feature, tol: float = 1e-3, prefer_refkey: bool = False):
     """
     返回特征的 SurfaceBodies/ResultBodies 按稳定键排序后的列表。
     同文档内可优先用 ReferenceKey;跨文档回退到几何键。
@@ -266,7 +269,7 @@ def stable_sorted_bodies(feature, tol: float = 1e-6, prefer_refkey: bool = False
             pass
     return sorted(arr, key=lambda b: body_canonical_key(b, tol))
 
-def body_stable_rank_in_feature( feature, body, tol: float = 1e-6) -> int:
+def body_stable_rank_in_feature( feature, body, tol: float = 1e-3) -> int:
     """
     给定某个 body,返回它在稳定排序中的 1-based 序号；失败时返回 -1。
     """
@@ -294,7 +297,7 @@ def body_stable_rank_in_feature( feature, body, tol: float = 1e-6) -> int:
     return -1
 
 
-def pick_edge_by_stable_ranks( feature, stable_body_rank: int, stable_edge_rank: int, tol: float = 1e-6):
+def pick_edge_by_stable_ranks( feature, stable_body_rank: int, stable_edge_rank: int, tol: float = 1e-3):
     """
     按稳定排序选出指定 body 与其内的 edge(均为 1-based rank)。
     """
@@ -307,7 +310,7 @@ def pick_edge_by_stable_ranks( feature, stable_body_rank: int, stable_edge_rank:
         return None
     return edges_sorted[stable_edge_rank - 1]
 
-def pick_face_by_stable_ranks(part_doc, feature, stable_body_rank: int, stable_face_rank: int, tol: float = 1e-6):
+def pick_face_by_stable_ranks(feature, stable_body_rank: int, stable_face_rank: int, tol: float = 1e-3):
     """
     按稳定排序选出指定 body 与其内的 face(均为 1-based rank)。
     """
@@ -460,6 +463,8 @@ def transient_point_2d(app, x, y):
 def transient_point_3d(app, x, y, z):
     return app.TransientGeometry.CreatePoint(x, y, z)
 
+def transient_vector_3d(app, vec):
+    return app.TransientGeometry.CreateVector(vec[0], vec[1], vec[2])
 
 def transient_unit_vector_3d(app, x, y, z):
     return app.TransientGeometry.CreateUnitVector(x, y, z)
@@ -474,10 +479,30 @@ def add_sketch2d_circle(sketch, center, radius):
     circle = sketch.SketchCircles.AddByCenterRadius(center, radius)
     return circle
 
-def add_sketch2d_arc(sketch, center, radius, start_angle, sweep_angle):
-    arc = sketch.SketchArcs.AddByCenterStartSweepAngle(center, radius, start_angle, sweep_angle)
-    return arc
-
+def add_sketch2d_arc(sketch, *args):
+    """
+    Create a 2D arc in the sketch.
+    Supported signatures:
+      - (center_point2d, radius, start_angle, sweep_angle) -> AddByCenterStartSweepAngle
+      - (start_point2d, mid_point2d, end_point2d) -> AddByThreePoints
+      - (center_point2d, start_point2d, end_point2d, is_counter_clockwise) -> AddByThreePoints (boolean ignored for backward compatibility)
+    """
+    # Center/Radius/Angles overload
+    if len(args) == 4 and isinstance(args[1], (int, float, np.floating)):
+        center, radius, start_angle, sweep_angle = args
+        arc = sketch.SketchArcs.AddByCenterStartSweepAngle(center, radius, start_angle, sweep_angle)
+        return arc
+    # Three-point overload
+    if len(args) == 3:
+        start_point, mid_point, end_point = args
+        arc = sketch.SketchArcs.AddByThreePoints(start_point, mid_point, end_point)
+        return arc
+    # Backward compatibility: three points + unused boolean
+    if len(args) == 4:
+        p1, p2, p3, is_counter_clockwise = args
+        arc = sketch.SketchArcs.AddByCenterStartEndPoint(p1, p2, p3, is_counter_clockwise)
+        return arc
+    raise TypeError("add_sketch2d_arc expected (center, radius, start_angle, sweep_angle) or (start_point, mid_point, end_point)")
 
 def add_work_plane(com_def, origin, x_axis, y_axis):
     origin = transient_point_3d(com_def.Application, *origin)
@@ -486,6 +511,16 @@ def add_work_plane(com_def, origin, x_axis, y_axis):
     work_plane = com_def.WorkPlanes.AddFixed(origin, x_axis, y_axis)
     return work_plane
 
+def add_work_axe(com_def,origin, axis):
+    origin = transient_point_3d(com_def.Application, *origin)
+    _axis = transient_unit_vector_3d(com_def.Application, *axis)
+    work_axe = com_def.WorkAxes.AddFixed(origin, _axis)
+    return work_axe
+
+def add_work_point(com_def,point):
+    _point = transient_point_3d(com_def.Application, *point)
+    work_point = com_def.WorkPoints.AddFixed(_point)
+    return work_point
 
 def add_profile(sketch):
     profile = sketch.Profiles.AddForSolid()
@@ -541,19 +576,19 @@ def convert_to_extrude_inventor(com_def, extrude_op):
     )
     return extrude_def
 
-
 def convert_extrude_op_to_inventor(operation):
-    if operation == EXTRUDE_OPERATIONS.index("NewBodyFeatureOperation"):
+    if operation == BODY_OPERATIONS.index("NewBodyFeatureOperation"):
         extrude_type = ExtrudeType.NewBody
-    elif operation == EXTRUDE_OPERATIONS.index("JoinFeatureOperation"):
+    elif operation == BODY_OPERATIONS.index("JoinFeatureOperation"):
         extrude_type = ExtrudeType.Join
-    elif operation == EXTRUDE_OPERATIONS.index("CutFeatureOperation"):
+    elif operation == BODY_OPERATIONS.index("CutFeatureOperation"):
         extrude_type = ExtrudeType.Cut
-    elif operation == EXTRUDE_OPERATIONS.index("IntersectFeatureOperation"):
+    elif operation == BODY_OPERATIONS.index("IntersectFeatureOperation"):
         extrude_type = ExtrudeType.Intersect
     else:
         raise ValueError("Invalid operation")
 
+    return extrude_type
     return extrude_type
 
 
@@ -852,11 +887,16 @@ def index_edge(edge) -> dict:
     Returns:
         dict: 包含 surfaceBodyRank, edgeRank, featureName 的字典
     """
+
+    # edge.Application.ActiveDocument.SelectSet.Select(edge)
+    
     surface_body = edge.Parent
     edge_rank = -1
     sorted_edges = stable_sorted_edges(surface_body,1e-3)
+    target_key = edge.TransientKey
     for idx, e in enumerate(sorted_edges, start=1):
-        if get_reference_key_str(e) == get_reference_key_str(edge):
+        key1 = e.TransientKey
+        if key1 == target_key:
             edge_rank = idx
             break
 
@@ -867,7 +907,7 @@ def index_edge(edge) -> dict:
         if get_reference_key_str(b) == get_reference_key_str(surface_body):
             surface_body_rank = idx
             break
-        
+
     if surface_body_rank == -1 or edge_rank == -1:
         print(f"Warning: Could not find edge rank or surface body rank for edge in feature {created_by_feature.Name}")
     return {"surfaceBodyRank": surface_body_rank, "edgeRank": edge_rank,"featureName": created_by_feature.Name}
@@ -881,11 +921,15 @@ def index_face(face) -> dict:
     Returns:
         dict: 包含 surfaceBodyRank, faceRank, featureName 的字典
     """
+    # select face
+    face.Application.ActiveDocument.SelectSet.Select(face)
     surface_body = face.Parent
     face_rank = -1
-    sorted_faces = stable_sorted_faces(face.Parent,1e-3)
+    sorted_faces = stable_sorted_faces(surface_body,1e-3)
+    target_key = face.TransientKey
     for idx, f in enumerate(sorted_faces, start=1):
-        if get_reference_key_str(f) == get_reference_key_str(face):
+        key1 = f.TransientKey
+        if key1 == target_key:
             face_rank = idx
             break
     
@@ -912,14 +956,28 @@ def get_face_by_index(com_def, face_index) -> Optional[Any]:
         face: Inventor Face 对象,如果没有找到则返回None
     """
     try:
-        
         feature = get_feature_by_name(com_def, face_index['featureName'])
         if not feature:
             return None
-        body = feature.SurfaceBodies.Item(face_index['surfaceBodyIndex'])
-        return body.Faces.Item(face_index['faceIndex'])
+        body_rank = face_index['surfaceBodyRank']
+        face_rank = face_index['faceRank']
+        face = pick_face_by_stable_ranks(feature,stable_body_rank=body_rank,stable_face_rank=face_rank)
+        return face
     except Exception as e:
         print(f"Error in get_face_by_index: {e}")
+        return None
+
+def get_edge_by_index(com_def, edge_index):
+    try:
+        feature = get_feature_by_name(com_def, edge_index['featureName'])
+        if not feature:
+            return None
+        body_rank = edge_index['surfaceBodyRank']
+        edge_rank = edge_index['edgeRank']
+        edge = pick_edge_by_stable_ranks(feature, stable_body_rank=body_rank, stable_edge_rank=edge_rank)
+        return edge
+    except Exception as e:
+        print(f"Error in get_edge_by_index: {e}")
         return None
 
 def get_feature_by_name(com_def, feature_name):
@@ -937,3 +995,17 @@ def get_feature_by_name(com_def, feature_name):
         if feature.Name == feature_name:
             return feature
     return None
+
+def is_extent_with_direction(extent_type):
+    """
+    判断拉伸类型是否包含方向
+    Args:
+        extent_type: 拉伸类型
+    Returns:
+        bool: 如果包含方向则返回True,否则返回False
+    """
+    if extent_type ==constants.kDistanceExtent or extent_type == constants.kToNextFaceExtent or extent_type == constants.kToFaceExtent or extent_type == constants.kToBodyExtent:
+        return True
+    else:
+        print(f"Extent type {enum_name(extent_type)} does not have direction.")
+        return False

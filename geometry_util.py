@@ -2,7 +2,7 @@
 
 
 from typing import Optional, TextIO
-from inventor_util import enum_name, index_face
+# from inventor_util import enum_name, index_face
 
 # --------------- Printing helper -----------------
 
@@ -68,15 +68,29 @@ class SketchPlane:
 
     def plane_entity_ref(self):
         try:
-            return index_face(self.plane_entity)
+            import inventor_util
+            return inventor_util.index_face(self.plane_entity)
         except Exception as e:
-            print(f"Error indexing plane entity: {e}")
+            # print(f"Error indexing plane entity: {e}")
             return None
 
     def __repr__(self):
         return (f"SketchPlane(origin={self.origin}, normal={self.normal}, "
                 f"axis_x={self.axis_x}, axis_y={self.axis_y})")
-    
+
+
+    def to_dict(self):
+        return {
+            'geometry':{
+                    "origin": self.origin,
+                    "normal": self.normal,
+                    "axis_x": self.axis_x,
+                    "axis_y": self.axis_y
+                },
+            "index": self.plane_entity_ref()
+        }
+
+
 
 class RevolveAxis:
     def __init__(self, axis_entity):
@@ -108,6 +122,20 @@ class RevolveAxis:
     def __repr__(self):
         return (f"RevolveAxis(start_point={self.start_point}, "
                 f"direction={self.direction})")
+    
+    def axis_entity_ref(self):
+        try:
+            import inventor_util
+            return inventor_util.index_edge(self.axis_entity)
+        except Exception as e:
+            # print(f"Error indexing axis entity: {e}")
+            return None
+    def to_dict(self):
+        return {
+            "start_point": {"x": self.start_point.x, "y": self.start_point.y, "z": self.start_point.z},
+            "direction": {"x": self.direction.x, "y": self.direction.y, "z": self.direction.z},
+            "index": self.axis_entity_ref()
+        }
 
 
 class SketchPoint:
@@ -148,7 +176,8 @@ class Parameter:
 
     @property
     def  value_type(self):
-        return  enum_name(self._parameter.ModelValueType)
+        import inventor_util
+        return  inventor_util.enum_name(self._parameter.ModelValueType)
 
     def __repr__(self):
         return f"Parameter(name={self.name}, value={self.value}, expression={self.expression}, value_type={self.value_type})"

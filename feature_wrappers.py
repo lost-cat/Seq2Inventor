@@ -5,6 +5,7 @@ printing and serialization helpers.
 """
 from __future__ import annotations
 import json
+import math
 from typing import Any, Dict, Optional, List, Type, TextIO
 from win32com.client import constants, CastTo
 from inventor_util import (
@@ -12,6 +13,8 @@ from inventor_util import (
     get_reference_key,
     get_reference_key_str,
     index_edge,
+    index_face,
+    is_extent_with_direction,
     operation_name,
     extent_direction_name,
     extent_type_name,
@@ -138,14 +141,7 @@ class ProfileWrapper(InventorObjectWrapper):
                 data["sketchName"] = sk_name
                 planar_sketch = CastTo(sketch, "PlanarSketch")
                 sketch_plane = SketchPlane(planar_sketch)
-                data['SketchPlane'] = {'geometry':{
-                    "origin": sketch_plane.origin,
-                    "normal": sketch_plane.normal,
-                    "axis_x": sketch_plane.axis_x,
-                    "axis_y": sketch_plane.axis_y
-                }
-                }
-                data['SketchPlane']['index'] = sketch_plane.plane_entity_ref() # type: ignore
+                data['SketchPlane'] = sketch_plane.to_dict()
 
         data["ProfilePaths"] = []
         try:
@@ -217,6 +213,8 @@ class ExtrudeFeatureWrapper(BaseFeatureWrapper):
                     d["distance"] = Parameter(getattr(dist_ext, "Distance", None))
                     dir_val = getattr(dist_ext, "Direction", None)
                     d["direction"] = extent_direction_name(dir_val) or dir_val
+                else:
+                    raise NotImplementedError(f"ExtentType {defn.ExtentType} not implemented")
             except Exception:
                 pass
             try:
@@ -258,7 +256,7 @@ class RevolveFeatureWrapper(BaseFeatureWrapper):
         d['axisEntity'] = RevolveAxis(self.feature.AxisEntity)
 
         try:
-            d["name"] = self._safe_get(self.feature, "Name")
+            _, d["name"] = self._safe_get(self.feature, "Name")
             d["extentType"] = extent_type_name(self.feature.ExtentType) or self.feature.ExtentType
             if d["extentType"] == 'kAngleExtent':
                 angle_ext = CastTo(self.feature.Extent, "AngleExtent")
@@ -387,6 +385,12 @@ class ChamferFeatureWrapper(BaseFeatureWrapper):
         if d['chamferType'] == 'kDistance':
             _ , distance = self._safe_get(chamfer_def, "Distance")
             d['distance'] = Parameter(distance)
+        elif d['chamferType'] == 'kTwoDistance':
+            _, distance1 = self._safe_get(chamfer_def, "DistanceOne")
+            _, distance2 = self._safe_get(chamfer_def, "DistanceTwo")
+            d['distanceOne'] = Parameter(distance1)
+            d['distanceTwo'] = Parameter(distance2)
+            d['face'] = index_face(chamfer_def.Face)
         else:
             raise NotImplementedError(f"Chamfer type {d['chamferType']} not implemented in to_dict")
         chamfered_edges = chamfer_def.ChamferedEdges
@@ -403,6 +407,56 @@ class ChamferFeatureWrapper(BaseFeatureWrapper):
         return d
     
 
+
+class HoleFeatureWrapper(BaseFeatureWrapper):
+    def __init__(self, i_object, doc=None) -> None:
+        super().__init__(i_object, doc=doc)
+        self.feature = CastTo(i_object, "HoleFeature")
+        self.friendly_type = "HoleFeature"
+
+    
+    def to_dict(self) -> Dict[str, Any]:
+        d = super().to_dict()
+        d['featureType'] = 'HoleFeature'
+        _ , d['name'] = self._safe_get(self.feature, "Name")
+        d['holeType'] =  enum_name(self.feature.HoleType) # type: ignore
+        d['extentType'] = extent_type_name(self.feature.ExtentType)
+        if d['extentType'] == 'kDistanceExtent':
+            extent = CastTo(self.feature.Extent, "DistanceExtent")
+            d['direction'] = extent_direction_name(getattr(extent, "Direction", None)) or getattr(extent, "Direction", None)
+        else:
+            raise NotImplementedError(f"Hole extent type {d['extentType']} not implemented in to_dict")
+        d['isFlatBottomed'] = self.feature.FlatBottom
+        if  not d['isFlatBottomed']:
+            d['bottomTipAngle'] = Parameter(self.feature.BottomTipAngle)
+        d['depth'] =self.feature.Depth
+        d['sketchPlane'] = SketchPlane(self.feature.Sketch).to_dict()
+        d['placementType'] = enum_name(self.feature.PlacementType)
+
+        hole_center_points  = self.feature.HoleCenterPoints 
+        d['holeCenterPoints'] = []
+        for i in range(1, getattr(hole_center_points, "Count", 0) + 1):
+            try:
+                pt = Point2D.from_inventor(hole_center_points.Item(i).Geometry)
+                d['holeCenterPoints'].append(pt)
+            except Exception as e:
+                print(f"Error processing hole center point in hole {d['name']}: {e}")
+                continue
+        
+        d['isTapped'] = self.feature.Tapped
+        if not d['isTapped']:
+            d['holeDiameter'] = Parameter(self.feature.HoleDiameter)
+        else:
+            raise NotImplementedError("Tapped holes not implemented in to_dict")
+
+
+        return d
+    
+    def pretty_print(self, prefix: str = "", out: TextIO | None = None) -> None:      
+        d = self.to_dict()
+        _emit(f"{prefix}{d.get('name','<unnamed>')} ({self.friendly_type})", out)
+        super().pretty_print(prefix, out) 
+
 # --------------- Factory -----------------
 
 _WRAPPER_MAP: Dict[str, Type[BaseFeatureWrapper]] = {
@@ -410,6 +464,7 @@ _WRAPPER_MAP: Dict[str, Type[BaseFeatureWrapper]] = {
     'RevolveFeature': RevolveFeatureWrapper,
     'FilletFeature': FilletFeatureWrapper,
     'ChamferFeature': ChamferFeatureWrapper,
+    'HoleFeature': HoleFeatureWrapper,
 }
 
 def wrap_feature(raw_feature, *, kind: Optional[str] = None, doc=None) -> BaseFeatureWrapper:
@@ -419,17 +474,22 @@ def wrap_feature(raw_feature, *, kind: Optional[str] = None, doc=None) -> BaseFe
             tval = raw_feature.Type
             # Reverse mapping via name suffix
             # We only attempt a few known constant names
-            if tval == getattr(constants, 'kExtrudeFeatureObject', None):
+            if tval == getattr(constants, 'kExtrudeFeatureObject'):
                 kind = 'ExtrudeFeature'
-            elif tval == getattr(constants, 'kRevolveFeatureObject', None):
+            elif tval == getattr(constants, 'kRevolveFeatureObject'):
                 kind = 'RevolveFeature'
-            elif tval == getattr(constants, 'kFilletFeatureObject', None):
+            elif tval == getattr(constants, 'kFilletFeatureObject'):
                 kind = 'FilletFeature'
-            elif tval == getattr(constants, 'kChamferFeatureObject', None):
+            elif tval == getattr(constants, 'kChamferFeatureObject'):
                 kind = 'ChamferFeature'
-        except Exception:
+            elif tval == getattr(constants, 'kHoleFeatureObject'):
+                kind = 'HoleFeature'
+        except Exception as e:
+            print(f"Warning: Could not determine feature type: {e}")
             pass
-    cls = _WRAPPER_MAP.get(kind or '', BaseFeatureWrapper)
+    if kind is None:
+        raise TypeError(f"UnSupported feature type and kind could not be determined.{raw_feature.Type}")
+    cls = _WRAPPER_MAP.get(kind, BaseFeatureWrapper)
     return cls(raw_feature, doc=doc)
 
 # --------------- Collection utilities -----------------
@@ -437,26 +497,14 @@ def wrap_feature(raw_feature, *, kind: Optional[str] = None, doc=None) -> BaseFe
 def features_to_dict_list(features, *, doc=None) -> List[Dict[str, Any]]:
     out: List[Dict[str, Any]] = []
     for feat in features:
-        try:
-            if feat.Type == getattr(constants, 'kFilletFeatureObject', None) or feat.Type == getattr(constants, 'kChamferFeatureObject', None):
-                feat.SetEndOfPart(True)
-            try:
-                out.append(wrap_feature(feat, doc=doc).to_dict())
-            except Exception as e:
-                print(f"Error processing feature {feat}: {e}")
-                continue
+        if  feat.Type == constants.kHoleFeatureObject:
             feat.SetEndOfPart(False)
-        except Exception as e:
-            print(f"Error processing feature {feat}: {e}")
-            continue
+        else:
+            feat.SetEndOfPart(True)
+        
+        out.append(wrap_feature(feat, doc=doc).to_dict())
+
     return out
-
-
-def post_process_features(features, *, doc=None) -> None:
-    for feat in features:
-        if feat['featureType'] == 'FilletFeature':
-            for eset in feat.get('edgeSets', []):
-                eset['edges'] = sorted(eset.get('edges', []))
 
 
 
@@ -520,8 +568,10 @@ def dump_features_as_json(features, path: str, *, doc=None, indent: int = 2) -> 
         
         if isinstance(obj, InventorObjectWrapper):
             return obj.to_dict()
+        
+        if isinstance(obj, RevolveAxis):
+            return obj.to_dict()
         raise TypeError(f"Object of type {obj.__class__.__name__} is not JSON serializable")
-
     with open(path, 'w', encoding='utf-8') as f:
         json.dump(payload, f, ensure_ascii=False, indent=indent, default=_json_default)
 

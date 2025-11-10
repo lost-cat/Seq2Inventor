@@ -20,15 +20,17 @@ def main():
         raise SystemExit("Inventor application not available.")
     app.Visible = True
     part_doc = open_inventor_document(
-        app, r"E:\Python\PyProjects\Seq2Inventor\test_inventor_0.ipt"
+        app, r"E:\Python\PyProjects\Seq2Inventor\data\parts\0000.ipt"
     )
     if part_doc is None:
         print("Failed to open document.")
         raise SystemExit(1)
+    count = part_doc.ComponentDefinition.SurfaceBodies.Count
+    print("SurfaceBodies Count:", count)
     features = get_all_features(part_doc)
     # print_features(features, doc=part_doc)
     dump_features_as_json(
-        features, path=r"E:\Python\PyProjects\Seq2Inventor\features_test_inventor_0.json", doc=part_doc
+        features, path=r"E:\Python\PyProjects\Seq2Inventor\data\parts\0000.json", doc=part_doc
     )
 
 
