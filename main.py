@@ -8,8 +8,11 @@ import tqdm
 
 from cad_utils.extrude import CADSequence
 from cad_utils.macro import EXT_IDX
-from inventor_util import *
+from inventor_utils.app import add_part_document, save__inventor_document, get_inventor_application
+from inventor_utils.features import create_inventor_model_from_sequence
 from enum import Enum
+
+from inventor_utils.utils import remove_padding
 
 class InventorModelStatus(Enum):
     VEC_CONVERSION_FAILED = "Vector conversion failed"
@@ -64,6 +67,7 @@ def parse_deepcad_dataset(data_dir,app):
     pbar = tqdm.tqdm(file_paths)
 
     for file_path in pbar:
+        data_id = os.path.basename(file_path).split(".")[0]
         pbar.set_description(f"Processing: {data_id}")
         status, part = process_one(file_path,app)
         if status == InventorModelStatus.VEC_CONVERSION_FAILED:

@@ -1,0 +1,25 @@
+{
+  "model": {
+    "d_model": 256,
+    "nhead": 8,
+    "num_layers": 6,
+    "dim_feedforward": 1024,
+    "dropout": 0.1
+  },
+  "args": {
+    "data": null,
+    "out": "training/out_synth_smoke",
+    "epochs": 1,
+    "batch": 16,
+    "lr": 0.0003,
+    "workers": 0,
+    "seq_len": null,
+    "d_model": 256,
+    "heads": 8,
+    "layers": 6,
+    "ffn": 1024,
+    "dropout": 0.1,
+    "device": "cpu",
+    "synthetic": "8,16"
+  }
+}

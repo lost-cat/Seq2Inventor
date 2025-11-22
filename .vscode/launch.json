@@ -1,18 +1,39 @@
 {
     "configurations": [
         {
+            "name": "BatchSequenceExtract",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${cwd}/batch_sequence_extract.py",
+            "console": "integratedTerminal",
+            "args": "--part_dir ${command:pickArgs}  --start ${command:pickArgs}"
+        },
+        {
             "name": "SequenceExtract",
             "type": "debugpy",
             "request": "launch",
             "program": "${cwd}/sequence_extract.py"
         },
-            {
+        {
             "name": "reconstruct_from_json",
             "type": "debugpy",
             "request": "launch",
             "program": "${cwd}/reconstruct_from_json.py",
-            "args": "E:\\Python\\PyProjects\\Seq2Inventor\\features_test_inventor_0.json"
-            
+            "args": "${command:pickArgs}"
+        },
+        {
+            "name": "label_faces",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${cwd}/label.py",
+            // "args": "E:\\Python\\PyProjects\\Seq2Inventor\\features_test_inventor_0.json"
+        },
+        {
+            "name": "reconstruct_from_json_revolve",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${cwd}/reconstruct_from_json.py",
+            "args": "E:\\Python\\PyProjects\\Seq2Inventor\\features_test_inventor_1.json"
         },
     ]
 }

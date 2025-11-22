@@ -1,0 +1,18 @@
+# Minimal extra deps for training
+# Keep core project requirements separate in root requirements.txt
+
+# PyTorch (works with 1.12+; upgrade if you want newer features)
+torch>=1.12
+
+# Data science helpers
+numpy>=1.24
+scikit-learn>=1.3
+pandas>=2.0
+
+# Logging and progress
+rich>=13.7
+tqdm>=4.66
+
+# Plotting (optional)
+matplotlib>=3.7
+seaborn>=0.13

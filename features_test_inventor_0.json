@@ -599,8 +599,8 @@
           }
         },
         "index": {
-          "surfaceBodyIndex": 1,
-          "faceIndex": 2,
+          "surfaceBodyRank": 1,
+          "faceRank": 21,
           "featureName": "拉伸1"
         }
       },
@@ -644,8 +644,8 @@
         },
         "edges": [
           {
-            "surfaceBodyIndex": 1,
-            "edgeIndex": 5,
+            "surfaceBodyRank": 1,
+            "edgeRank": 49,
             "featureName": "拉伸1"
           }
         ]
@@ -692,8 +692,8 @@
           }
         },
         "index": {
-          "surfaceBodyIndex": 1,
-          "faceIndex": 6,
+          "surfaceBodyRank": 1,
+          "faceRank": 27,
           "featureName": "拉伸1"
         }
       },
@@ -735,8 +735,8 @@
     },
     "edges": [
       {
-        "surfaceBodyIndex": 1,
-        "edgeIndex": 1,
+        "surfaceBodyRank": 1,
+        "edgeRank": 49,
         "featureName": "拉伸1"
       }
     ]
@@ -781,8 +781,8 @@
           }
         },
         "index": {
-          "surfaceBodyIndex": 1,
-          "faceIndex": 11,
+          "surfaceBodyRank": 1,
+          "faceRank": 2,
           "featureName": "拉伸1"
         }
       },
@@ -809,65 +809,5 @@
         }
       ]
     }
-  },
-  {
-    "ReferenceKey": "EAIAABAAAACbFAAAAAAAAIAAAAAAAAAA",
-    "type": "ChamferFeature",
-    "name": "倒角2",
-    "featureType": "ChamferFeature",
-    "chamferType": "kDistance",
-    "distance": {
-      "name": "d16",
-      "value": 0.1,
-      "expression": "1 mm",
-      "valueType": "kNominalValue"
-    },
-    "edges": [
-      {
-        "surfaceBodyIndex": 1,
-        "edgeIndex": 14,
-        "featureName": "拉伸1"
-      },
-      {
-        "surfaceBodyIndex": 1,
-        "edgeIndex": 14,
-        "featureName": "拉伸1"
-      },
-      {
-        "surfaceBodyIndex": 1,
-        "edgeIndex": 14,
-        "featureName": "拉伸1"
-      },
-      {
-        "surfaceBodyIndex": 1,
-        "edgeIndex": 14,
-        "featureName": "拉伸1"
-      },
-      {
-        "surfaceBodyIndex": 1,
-        "edgeIndex": 14,
-        "featureName": "拉伸1"
-      },
-      {
-        "surfaceBodyIndex": 1,
-        "edgeIndex": 14,
-        "featureName": "拉伸1"
-      },
-      {
-        "surfaceBodyIndex": 1,
-        "edgeIndex": 14,
-        "featureName": "拉伸1"
-      },
-      {
-        "surfaceBodyIndex": 1,
-        "edgeIndex": 14,
-        "featureName": "拉伸1"
-      },
-      {
-        "surfaceBodyIndex": 1,
-        "edgeIndex": 14,
-        "featureName": "拉伸1"
-      }
-    ]
   }
 ]
