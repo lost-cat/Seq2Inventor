@@ -1,6 +1,14 @@
 from typing import Optional, Any
 
-from .metadata import collect_face_metadata, collect_edge_metadata, is_face_meta_similar, is_edge_meta_similar
+from inventor_utils.enums import enum_name
+from inventor_utils.geometry import Point3D
+
+from .metadata import (
+    collect_face_metadata,
+    collect_edge_metadata,
+    is_face_meta_similar,
+    is_edge_meta_similar,
+)
 from .reference import get_reference_key_str
 from .sorting import stable_sorted_bodies, stable_sorted_edges, stable_sorted_faces
 
@@ -18,40 +26,52 @@ class EntityIndexHelper:
     def update_all(self):
         surface_bodies = self.com_def.SurfaceBodies
         if surface_bodies.Count != 1:
-            raise ValueError("Only single body parts are supported for caching")
+            print("Warning: Only single body parts are supported for caching")
+            return
         body = surface_bodies.Item(1)
         faces = body.Faces
         edges = body.Edges
-        self.cached_face_meta_map.clear()
-        self.cached_edge_meta_map.clear()
+        self.cached_face_meta_map = {}
+        self.cached_edge_meta_map = {}
         for i in range(1, faces.Count + 1):
             face = faces.Item(i)
             face_key = self.get_entity_key(face)
             face_meta = collect_face_metadata(face)
-            self.cached_face_meta_map[face_key] = {"meta": face_meta, "valid": True, "face": face}
+            self.cached_face_meta_map[face_key] = {
+                "meta": face_meta,
+                "face": face,
+            }
 
         for i in range(1, edges.Count + 1):
             edge = edges.Item(i)
-            edge_key = self.get_entity_key(edge)
+            from .utils import select_entity_in_inventor_app
+
+            # select_entity_in_inventor_app(edge)
+            try:
+                edge_key = self.get_entity_key(edge)
+            except Exception:
+                print(
+                    f"Warning: Could not get edge key, skipping edge edge info is follow, \n start point: {Point3D.from_inventor(edge.StartVertex.Point)}\n end point {Point3D.from_inventor(edge.StopVertex.Point)}\n edge geometry type: {enum_name(edge.GeometryType)} \n"
+                )
+                continue
             edge_meta = collect_edge_metadata(edge)
-            self.cached_edge_meta_map[edge_key] = {"meta": edge_meta, "valid": True, "edge": edge}
+            self.cached_edge_meta_map[edge_key] = {
+                "meta": edge_meta,
+                "edge": edge,
+            }
 
         self.build_type_dicts()
 
     def build_type_dicts(self):
-        self.type2faceDict.clear()
-        self.type2EdgeDict.clear()
+        self.type2faceDict = {}
+        self.type2EdgeDict = {}
         for key, value in self.cached_face_meta_map.items():
-            if not value["valid"]:
-                continue
             face_type = value["meta"].get("surfaceType")
             if face_type not in self.type2faceDict:
                 self.type2faceDict[face_type] = []
             self.type2faceDict[face_type].append((key, value["meta"]))
 
         for key, value in self.cached_edge_meta_map.items():
-            if not value["valid"]:
-                continue
             edge_type = value["meta"].get("geometryType")
             if edge_type not in self.type2EdgeDict:
                 self.type2EdgeDict[edge_type] = []
@@ -62,6 +82,16 @@ class EntityIndexHelper:
             self.cached_face_meta_map[key]["valid"] = False
         for key in self.cached_edge_meta_map:
             self.cached_edge_meta_map[key]["valid"] = False
+
+    def select_entity_by_meta(self, entity_meta):
+        meta_type = entity_meta.get("metaType")
+        if meta_type == "Face":
+            return self.select_face_by_meta(entity_meta)
+        elif meta_type == "Edge":
+            return self.select_edge_by_meta(entity_meta)
+        else:
+            raise ValueError(f"Unsupported metaType: {meta_type}")
+
 
     def select_face_by_meta(self, face_meta):
         target_surface_type = face_meta.get("surfaceType")
@@ -115,7 +145,11 @@ def pick_edge_by_stable_ranks(
     entity_index_helper: Optional[EntityIndexHelper] = None,
 ):
     bodies_sorted = stable_sorted_bodies(feature, tol)
-    if not bodies_sorted or stable_body_rank < 1 or stable_body_rank > len(bodies_sorted):
+    if (
+        not bodies_sorted
+        or stable_body_rank < 1
+        or stable_body_rank > len(bodies_sorted)
+    ):
         return None
     body = bodies_sorted[stable_body_rank - 1]
     edges_sorted = stable_sorted_edges(body, tol)
@@ -132,7 +166,11 @@ def pick_face_by_stable_ranks(
     entity_index_helper: Optional[EntityIndexHelper] = None,
 ):
     bodies_sorted = stable_sorted_bodies(feature, tol)
-    if not bodies_sorted or stable_body_rank < 1 or stable_body_rank > len(bodies_sorted):
+    if (
+        not bodies_sorted
+        or stable_body_rank < 1
+        or stable_body_rank > len(bodies_sorted)
+    ):
         return None
     body = bodies_sorted[stable_body_rank - 1]
     faces_sorted = stable_sorted_faces(body, tol)

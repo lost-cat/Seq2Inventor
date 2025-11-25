@@ -19,15 +19,22 @@ def remove_padding(vec):
     return vec
 
 
-def select_entity_in_inventor_app(entity):
+def select_entity_in_inventor_app(entity, clear_selection: bool = True):
     try:
         doc = entity.Application.ActiveDocument
         select_set = doc.SelectSet
-        select_set.Clear()
+        if clear_selection:
+            select_set.Clear()
         select_set.Select(entity)
     except Exception as e:
         print(f"Error selecting entity in Inventor app: {e}")
 
+def clear_selection_in_inventor_app(doc):
+    try:
+        select_set = doc.SelectSet
+        select_set.Clear()
+    except Exception as e:
+        print(f"Error clearing selection in Inventor app: {e}")
 
 def get_face_normal(face):
     normal_params = [0.3, 0.3]
@@ -135,3 +142,12 @@ def _json_default(obj):
     raise TypeError(
         f"Object of type {obj.__class__.__name__} is not JSON serializable"
     )
+
+
+def get_feature_by_name(com_def, feature_name):
+    features = com_def.Features
+    for i in range(1, features.Count + 1):
+        feat = features.Item(i)
+        if feat.Name == feature_name:
+            return feat
+    return None

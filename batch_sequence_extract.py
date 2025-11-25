@@ -49,7 +49,7 @@ if __name__ == "__main__":
         json_path = os.path.join(out_dir, os.path.basename(part_file).replace(".ipt", "_features.json"))
         from feature_wrappers import dump_features_as_json, wrap_feature
         try:
-            if len(features) >=25:
+            if len(features) >=50:
                 failed_files.append({part_file: "Too many features, skip"})
                 continue
             dump_features_as_json(features, path=json_path, doc=part_doc)

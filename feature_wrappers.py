@@ -28,9 +28,13 @@ from inventor_utils.geometry import (
     SketchPoint,
 )
 from inventor_utils.indexing import EntityIndexHelper
-from inventor_utils.metadata import collect_edge_metadata, collect_face_metadata
+from inventor_utils.metadata import (
+    collect_edge_metadata,
+    collect_entity_metadata,
+    collect_face_metadata,
+)
 from inventor_utils.reference import get_reference_key_str
-from inventor_utils.utils import _json_default
+from inventor_utils.utils import _json_default, clear_selection_in_inventor_app
 
 # --------------- Printing helper -----------------
 
@@ -112,6 +116,7 @@ class ProfileEntity(InventorObjectWrapper):
             try:
                 curve.pretty_print(prefix + "  ", out=out)
             except Exception:
+
                 pass
 
 
@@ -132,6 +137,7 @@ class ProfilePathWrapper(InventorObjectWrapper):
             try:
                 ent = self.i_object.Item(i)
             except Exception:
+
                 continue
             data["PathEntities"].append(
                 ProfileEntity(ent, entity_index_helper=self.entity_index_helper)
@@ -246,12 +252,12 @@ class ExtrudeFeatureWrapper(BaseFeatureWrapper):
 
         defn = self.feature.Definition
         d["operation"] = operation_name(defn.Operation) or defn.Operation
-        d['extent'] = ExtentFactory.from_inventor(defn.Extent).to_dict()
+        d["extent"] = ExtentFactory.from_inventor(defn.Extent).to_dict()
         d["extentType"] = extent_type_name(defn.ExtentType) or defn.ExtentType
         d["isTwoDirectional"] = defn.IsTwoDirectional
         if d["isTwoDirectional"]:
             if hasattr(defn, "ExtentTwoType"):
-                d['extentTwo'] = ExtentFactory.from_inventor(defn.ExtentTwo).to_dict()
+                d["extentTwo"] = ExtentFactory.from_inventor(defn.ExtentTwo).to_dict()
 
         # Profile
         ok_p, prof = self._safe_get(defn, "Profile")
@@ -301,10 +307,8 @@ class RevolveFeatureWrapper(BaseFeatureWrapper):
 
         try:
             _, d["name"] = self._safe_get(self.feature, "Name")
-            d["extentType"] = (
-                extent_type_name(self.feature.ExtentType)
-            )
-            d['extent'] = ExtentFactory.from_inventor(self.feature.Extent).to_dict()
+            d["extentType"] = extent_type_name(self.feature.ExtentType)
+            d["extent"] = ExtentFactory.from_inventor(self.feature.Extent).to_dict()
 
             if self.feature.IsTwoDirectional:
                 d["isTwoDirectional"] = True
@@ -312,7 +316,9 @@ class RevolveFeatureWrapper(BaseFeatureWrapper):
                     extent_type_name(self.feature.ExtentTwoType)
                     or self.feature.ExtentTwoType
                 )
-                d['extentTwo'] = ExtentFactory.from_inventor(self.feature.ExtentTwo).to_dict()
+                d["extentTwo"] = ExtentFactory.from_inventor(
+                    self.feature.ExtentTwo
+                ).to_dict()
 
             d["operation"] = (
                 operation_name(self.feature.Operation) or self.feature.Operation
@@ -431,6 +437,13 @@ class ChamferFeatureWrapper(BaseFeatureWrapper):
             d["distanceOne"] = Parameter(distance1)
             d["distanceTwo"] = Parameter(distance2)
             d["face"] = collect_face_metadata(chamfer_def.Face)
+        elif d["chamferType"] == "kDistanceAndAngle":
+            d["distance"] = Parameter(chamfer_def.Distance)
+            d["angle"] = Parameter(chamfer_def.Angle)
+            d["face"] = collect_face_metadata(chamfer_def.Face)
+            from inventor_utils.utils import select_entity_in_inventor_app
+            select_entity_in_inventor_app(chamfer_def.Face)
+            pass
         else:
             raise NotImplementedError(
                 f"Chamfer type {d['chamferType']} not implemented in to_dict"
@@ -442,7 +455,8 @@ class ChamferFeatureWrapper(BaseFeatureWrapper):
                 if "edges" not in d:
                     d["edges"] = []
                 d["edges"].append(collect_edge_metadata(edge))
-
+                from inventor_utils.utils import select_entity_in_inventor_app
+                select_entity_in_inventor_app(edge,False)
             except Exception as e:
                 print(f"Error processing edge in chamfer {d['name']}: {e}")
                 continue
@@ -579,6 +593,50 @@ class MirrorFeatureWrapper(BaseFeatureWrapper):
         return d
 
 
+class RectangularPatternFeatureWrapper(BaseFeatureWrapper):
+    def __init__(
+        self, i_object, entity_index_helper: Optional[EntityIndexHelper] = None
+    ) -> None:
+        super().__init__(i_object, entity_index_helper=entity_index_helper)
+        self.feature = CastTo(i_object, "RectangularPatternFeature")
+        self.friendly_type = "RectangularPatternFeature"
+
+    def to_dict(self) -> Dict[str, Any]:
+        d = super().to_dict()
+        d["type"] = "RectangularPatternFeature"
+        _, d["name"] = self._safe_get(self.feature, "Name")
+        # todo
+        return d
+
+
+class CircularPatternFeatureWrapper(BaseFeatureWrapper):
+    def __init__(
+        self, i_object, entity_index_helper: Optional[EntityIndexHelper] = None
+    ) -> None:
+        super().__init__(i_object, entity_index_helper=entity_index_helper)
+        self.feature = CastTo(i_object, "CircularPatternFeature")
+        self.friendly_type = "CircularPatternFeature"
+
+    def to_dict(self) -> Dict[str, Any]:
+        d = super().to_dict()
+        d["type"] = "CircularPatternFeature"
+        _, d["name"] = self._safe_get(self.feature, "Name")
+        defn = self.feature.Definition
+        d["isPatternOfBody"] = defn.PatternOfBody
+        d["angle"] = Parameter(defn.Angle)
+        d["count"] = Parameter(defn.Count)
+        d["isNaturalAxisDirection"] = defn.NaturalRotationAxisDirection
+        rotation_axis = defn.RotationAxis
+        d["rotationAxis"] = collect_entity_metadata(rotation_axis)
+        if not d["isPatternOfBody"]:
+            features_to_pattern = []
+            for i in range(1, defn.ParentFeatures.Count + 1):
+                feat = defn.ParentFeatures.Item(i)
+                features_to_pattern.append(getattr(feat, "Name", "<unknown>"))
+            d["featuresToPattern"] = features_to_pattern
+        return d
+
+
 # --------------- Factory -----------------
 
 _WRAPPER_MAP: Dict[str, Type[BaseFeatureWrapper]] = {
@@ -589,6 +647,8 @@ _WRAPPER_MAP: Dict[str, Type[BaseFeatureWrapper]] = {
     "HoleFeature": HoleFeatureWrapper,
     "ShellFeature": ShellFeatureWrapper,
     "MirrorFeature": MirrorFeatureWrapper,
+    "RectangularPatternFeature": RectangularPatternFeatureWrapper,
+    "CircularPatternFeature": CircularPatternFeatureWrapper,
 }
 
 
@@ -615,6 +675,10 @@ def wrap_feature(
                 kind = "ShellFeature"
             elif tval == getattr(constants, "kMirrorFeatureObject"):
                 kind = "MirrorFeature"
+            elif tval == getattr(constants, "kRectangularPatternFeatureObject"):
+                kind = "RectangularPatternFeature"
+            elif tval == getattr(constants, "kCircularPatternFeatureObject"):
+                kind = "CircularPatternFeature"
 
         except Exception as e:
             print(f"Warning: Could not determine feature type: {e}")
@@ -634,11 +698,19 @@ def features_to_dict_list(features, *, doc) -> List[Dict[str, Any]]:
     out: List[Dict[str, Any]] = []
     entity_ref_helper = EntityIndexHelper(doc.ComponentDefinition)
     for feat in features:
-        feat.SetEndOfPart(True)
+        try:
+            feat.SetEndOfPart(True)
+        except Exception:
+            print(f"Warning: Could not set EndOfPart on feature {feat.Name}")
+            continue
         out.append(wrap_feature(feat, entity_index_helper=entity_ref_helper).to_dict())
-        feat.SetEndOfPart(False)
+        try:
+            feat.SetEndOfPart(False)
+        except Exception:
+            print(f"Warning: Could not unset EndOfPart on feature {feat.Name}")
+            pass
         entity_ref_helper.update_all()
-
+        clear_selection_in_inventor_app(doc)
     features[-1].SetEndOfPart(False)
     return out
 

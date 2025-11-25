@@ -21,18 +21,21 @@ def main():
     app.Visible = True
     part_doc = open_inventor_document(
         app,
-        "E:\\Python\\PyProjects\\Seq2Inventor\\data\\race-car-tubular-chassis\\Formula\\sus_front_upper_right.ipt",
+        "E:\\Python\\PyProjects\\Seq2Inventor\\data\\race-car-tubular-chassis\\Formula\\axle_middle.ipt",
     )
     if part_doc is None:
         print("Failed to open document.")
         raise SystemExit(1)
     count = part_doc.ComponentDefinition.SurfaceBodies.Count
     features = get_all_features(part_doc)
+    if len(features) == 0:
+        print("No features found in the document.")
+        raise SystemExit(1)
     print("SurfaceBodies Count:", count)
     # print_features(features, doc=part_doc)
     dump_features_as_json(
         features,
-        path="E:\\Python\\PyProjects\\Seq2Inventor\\data\\race-car-tubular-chassis\\Formula_output\\sus_front_upper_right.json",
+        path="E:\\Python\\PyProjects\\Seq2Inventor\\data\\race-car-tubular-chassis\\Formula_output\\axle_middle.json",
         doc=part_doc,
     )
 

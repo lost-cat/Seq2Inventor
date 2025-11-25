@@ -1,8 +1,10 @@
 import math
 from typing import Tuple
 
+import numpy
+
 from .geometry import Point3D
-from .enums import enum_name
+from .enums import enum_name, is_type_of
 
 
 def _round_val(x: float, tol: float = 1e-3) -> float:
@@ -18,6 +20,32 @@ def _pt_key3(p: Point3D, tol: float = 1e-3):
     except Exception:
         return (0.0, 0.0, 0.0)
 
+def collect_entity_metadata(entity, tol: float = 1e-3) -> dict:
+    if is_type_of(entity, "Face"):
+        return collect_face_metadata(entity, tol)
+    if is_type_of(entity, "Edge"):
+        return collect_edge_metadata(entity, tol)
+    
+    raise ValueError(f"Unsupported entity type {enum_name(entity.Type)} for metadata collection")
+
+
+def _compute_mid_uv(face):
+    ev = face.Evaluator
+    # 基于参数域矩形
+    try:
+        rect = ev.ParamRangeRect  # Box2d
+        u_min = rect.MinPoint.X
+        v_min = rect.MinPoint.Y
+        u_max = rect.MaxPoint.X
+        v_max = rect.MaxPoint.Y
+        u_mid = (u_min + u_max) / 2.0
+        v_mid = (v_min + v_max) / 2.0
+    except Exception:
+        print("[debug] Failed to get ParamRangeRect for face; using default mid UV (0.5, 0.5)")
+        u_mid = 0.5
+        v_mid = 0.5
+    
+    return u_mid, v_mid
 
 def collect_face_metadata(face, tol: float = 1e-3) -> dict:
     metadata = {}
@@ -27,23 +55,35 @@ def collect_face_metadata(face, tol: float = 1e-3) -> dict:
     st = enum_name(st)
     face_evaluator = face.Evaluator
     area = _round_val(face_evaluator.Area, tol)
+    
+    #获取曲面 UV 中心坐标
+    range_box = face.Evaluator.RangeBox
+    uv_box = face_evaluator.ParamRangeRect
+    uv_center = _compute_mid_uv(face)
 
-    box = face.Evaluator.RangeBox
-    lo = _pt_key3(Point3D.from_inventor(box.MinPoint), tol)
-    hi = _pt_key3(Point3D.from_inventor(box.MaxPoint), tol)
-    centroid = tuple(_round_val((a + b) / 2.0, tol) for a, b in zip(lo, hi))
+    centroid = [0, 0, 0]
+    _, centroid = face_evaluator.GetPointAtParam([*uv_center],centroid)
+    centroid = tuple(_round_val(c, tol) for c in centroid)
     orient = []
-    _, orient = face_evaluator.GetNormal([0.5, 0.5], orient)
+    _, orient = face_evaluator.GetNormal([*uv_center], orient)
     orient = tuple(_round_val(c, tol) for c in orient)
     utangent = []
     v_tangent = []
-    _, utangent, v_tangent = face_evaluator.GetFirstDerivatives([0.5, 0.5], utangent, v_tangent)
-
+    _, utangent, v_tangent = face_evaluator.GetFirstDerivatives([*uv_center], utangent, v_tangent)
     metadata = {
+        "metaType": "Face",
         "surfaceType": st,
         "area": area,
         "centroid": centroid,
         "orientation": orient,
+        'rangeBox': {
+            'minPoint': (_round_val(range_box.MinPoint.X, tol), _round_val(range_box.MinPoint.Y, tol), _round_val(range_box.MinPoint.Z, tol)),
+            'maxPoint': (_round_val(range_box.MaxPoint.X, tol), _round_val(range_box.MaxPoint.Y, tol), _round_val(range_box.MaxPoint.Z, tol)),
+        },
+        'uvBox': {
+            'minPoint': ( _round_val(uv_box.MinPoint.X, tol), _round_val(uv_box.MinPoint.Y, tol)),
+            'maxPoint': ( _round_val(uv_box.MaxPoint.X, tol), _round_val(uv_box.MaxPoint.Y, tol)),
+        },
     }
     return metadata
 
@@ -79,12 +119,28 @@ def collect_edge_metadata(edge, tol: float = 1e-3) -> dict:
     adj_faces.sort()
 
     return {
+        "metaType": "Edge",
         "geometryType": t_name,
         "length": length,
         "midpoint": mid,
         "adjacentFaceTypes": tuple(adj_faces),
         "endpoints": ends,
     }
+
+def are_collinear(v1, v2, tol=1e-9):
+    """使用点积判断三维向量是否共线（忽略方向差异）"""
+    import numpy as np
+    v1 = np.asarray(v1, dtype=float)
+    v2 = np.asarray(v2, dtype=float)
+    if v1.shape != (3,) or v2.shape != (3,):
+        raise ValueError("需要长度为3的向量")
+    n1 = np.linalg.norm(v1)
+    n2 = np.linalg.norm(v2)
+    if n1 < tol or n2 < tol:
+        return False  # 约定近零向量不判定共线
+    r = abs(np.dot(v1, v2)) / (n1 * n2)  # 理论上共线 => r = 1
+    return (1.0 - r) <= tol  # r 足够接近 1
+
 
 
 def is_face_meta_similar(meta1: dict, meta2: dict, tol: float = 1e-3) -> tuple[bool, str]:
@@ -95,9 +151,16 @@ def is_face_meta_similar(meta1: dict, meta2: dict, tol: float = 1e-3) -> tuple[b
     for a, b in zip(meta1["centroid"], meta2["centroid"]):
         if abs(a - b) > tol:
             return False, "centroid not match"
-    for a, b in zip(meta1["orientation"], meta2["orientation"]):
+    # 判断包围盒是否一致
+    # rangeBox
+    rb1 = meta1['rangeBox']
+    rb2 = meta2['rangeBox']
+    for a, b in zip(rb1['minPoint'], rb2['minPoint']):
         if abs(a - b) > tol:
-            return False, "orientation not match"
+            return False, "rangeBox minPoint not match"    
+    for a, b in zip(rb1['maxPoint'], rb2['maxPoint']):
+        if abs(a - b) > tol:
+            return False, "rangeBox maxPoint not match"    
     return True, ""
 
 

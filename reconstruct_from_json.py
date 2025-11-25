@@ -12,12 +12,25 @@ from win32com.client import constants
 
 from inventor_utils.app import add_part_document, get_inventor_application
 from inventor_utils.enums import _const
-from inventor_utils.features import add_sketch2d_arc, add_sketch2d_circle, add_sketch2d_line, add_sketch2d_point, add_work_axe, add_work_plane, add_work_point
-from inventor_utils.indexing import EntityIndexHelper
-from inventor_utils.transient import add_sketch, transient_obj_collection, transient_point_2d, transient_point_3d, transient_unit_vector_3d
+from inventor_utils.features import (
+    add_sketch2d_arc,
+    add_sketch2d_circle,
+    add_sketch2d_line,
+    add_sketch2d_point,
+    add_work_axe,
+    add_work_plane,
+    add_work_point,
+)
+from inventor_utils.geometry import PlaneEntity
+from inventor_utils.indexing import EntityIndexHelper, get_feature_by_name
+from inventor_utils.transient import (
+    add_sketch,
+    transient_obj_collection,
+    transient_point_2d,
+    transient_point_3d,
+    transient_unit_vector_3d,
+)
 from inventor_utils.utils import select_entity_in_inventor_app
-
-
 
 
 def _draw_path_on_sketch(sketch, path: Dict[str, Any]) -> None:
@@ -89,7 +102,6 @@ def _draw_path_on_sketch(sketch, path: Dict[str, Any]) -> None:
                 f"[draw_path] Failed to create sketch curve for entity {i+1}/{count} of type {ctype}"
             )
 
-
         curves.append(current_sketch_curve)
 
         if i == 0:
@@ -98,10 +110,8 @@ def _draw_path_on_sketch(sketch, path: Dict[str, Any]) -> None:
         previous_sketch_curve = current_sketch_curve
 
 
-
-
 def _build_profile_from_json(
-    com_def, profile: Dict[str, Any], entity_index_helper:EntityIndexHelper
+    com_def, profile: Dict[str, Any], entity_index_helper: EntityIndexHelper
 ):
     # Build or pick work plane from JSON if available
     work_plane = None
@@ -158,7 +168,7 @@ def _build_profile_from_json(
 
 
 def _rebuild_extrude(
-    com_def, feat: Dict[str, Any], entity_index_helper:EntityIndexHelper
+    com_def, feat: Dict[str, Any], entity_index_helper: EntityIndexHelper
 ) -> Optional[Any]:
 
     prof_dict = feat.get("profile")
@@ -197,12 +207,47 @@ def _rebuild_extrude(
     elif ext_type == "kToExtent":
         extent_to_face: bool = extent.get("extentToFace")  # type: ignore
         to_entity = entity_index_helper.select_face_by_meta(extent.get("toEntity"))
-        select_entity_in_inventor_app(to_entity)
+        # select_entity_in_inventor_app(to_entity)
         if to_entity is None:
             raise ValueError(
                 "[rebuild] Extrude missing toEntity for ToExtent; skipping extrude"
             )
         ext_def.SetToExtent(to_entity, extent_to_face)
+    elif ext_type == "kFromToExtent":
+        if extent.get("isFromFaceWorkPlane") is False:
+            from_face = entity_index_helper.select_face_by_meta(extent.get("fromFace"))
+        else:
+            work_plane = PlaneEntity.from_dict(
+                extent.get("fromFace"), entity_index_helper=entity_index_helper
+            )
+            from_face = add_work_plane(
+                com_def,
+                work_plane.origin.to_tuple(),
+                work_plane.axis_x.to_tuple(),
+                work_plane.axis_y.to_tuple(),
+            )
+
+        if extent.get("isToFaceWorkPlane") is False:
+            to_face = entity_index_helper.select_face_by_meta(extent.get("toFace"))
+        else:
+            work_plane = PlaneEntity.from_dict(
+                extent.get("toFace"), entity_index_helper=entity_index_helper
+            )
+            to_face = add_work_plane(
+                com_def,
+                work_plane.origin.to_tuple(),
+                work_plane.axis_x.to_tuple(),
+                work_plane.axis_y.to_tuple(),
+            )
+
+        if from_face is None or to_face is None:
+            raise ValueError(
+                "[rebuild] Extrude missing fromFace or toFace for FromToExtent; skipping extrude"
+            )
+
+        extend_from_face: bool = extent.get("extendFromFace")  # type: ignore
+        extend_to_face: bool = extent.get("extendToFace")  # type: ignore
+        ext_def.SetFromToExtent(from_face, extend_from_face, to_face, extend_to_face)
 
     out_feature = ext_feats.Add(ext_def)
     out_feature.Name = feat.get("name", out_feature.Name)
@@ -211,14 +256,16 @@ def _rebuild_extrude(
 
 
 def _rebuild_revolve(
-    com_def, feat: Dict[str, Any], entity_index_helper:EntityIndexHelper
+    com_def, feat: Dict[str, Any], entity_index_helper: EntityIndexHelper
 ) -> Optional[Any]:
     prof_dict = feat.get("profile")
     if not prof_dict:
         print("[rebuild] Revolve missing profile; skipping")
         return
     try:
-        profile = _build_profile_from_json(com_def, prof_dict,entity_index_helper=entity_index_helper)
+        profile = _build_profile_from_json(
+            com_def, prof_dict, entity_index_helper=entity_index_helper
+        )
     except Exception as e:
         print(f"[rebuild] Failed to build profile: {e}; skipping revolve")
         return
@@ -231,11 +278,6 @@ def _rebuild_revolve(
         raise ValueError("[rebuild] Revolve missing extent; skipping revolve")
 
     axis_info = feat.get("axisEntity")
-    revolve_direction = extent.get("direction")
-    revolve_direction_const = _const(
-        revolve_direction, constants.kPositiveExtentDirection
-    )
-
     if not axis_info:
         print("[rebuild] Revolve missing axisEntity; skipping")
         return
@@ -261,19 +303,22 @@ def _rebuild_revolve(
 
     if extent_type == "kAngleExtent":
         angle = extent.get("angle")
+        revolve_direction = extent.get("direction")
+        revolve_direction_const = _const(
+            revolve_direction, constants.kPositiveExtentDirection
+        )
         if angle is None:
             raise ValueError("[rebuild] Revolve missing angle; skipping revolve")
         com_def.Features.RevolveFeatures.AddByAngle(
             profile, work_axis, angle["expression"], revolve_direction_const, op_const
         )
     elif extent_type == "kFullSweepExtent":
-        com_def.Features.RevolveFeatures.AddFull(
-            profile, work_axis, op_const
-        )
-        
+        com_def.Features.RevolveFeatures.AddFull(profile, work_axis, op_const)
 
 
-def _rebuild_fillet(com_def, feat: Dict[str, Any], entity_index_helper:EntityIndexHelper):
+def _rebuild_fillet(
+    com_def, feat: Dict[str, Any], entity_index_helper: EntityIndexHelper
+):
 
     fillet_def = com_def.Features.FilletFeatures.CreateFilletDefinition()
     edge_sets = feat.get("edgeSets", [])
@@ -282,9 +327,7 @@ def _rebuild_fillet(com_def, feat: Dict[str, Any], entity_index_helper:EntityInd
         edges = edge_set.get("edges", [])
         for edge_info in edges:
             try:
-                edge = entity_index_helper.select_edge_by_meta(
-                    edge_info
-                )
+                edge = entity_index_helper.select_edge_by_meta(edge_info)
                 edge_collection.Add(edge)
             except Exception as e:
                 print(
@@ -308,15 +351,15 @@ def _rebuild_fillet(com_def, feat: Dict[str, Any], entity_index_helper:EntityInd
     pass
 
 
-def _rebuild_chamfer(com_def, feat: Dict[str, Any], entity_index_helper:EntityIndexHelper):
+def _rebuild_chamfer(
+    com_def, feat: Dict[str, Any], entity_index_helper: EntityIndexHelper
+):
     edges = feat.get("edges", [])
     edge_collection = com_def.Application.TransientObjects.CreateEdgeCollection()
     for edge_info in edges:
         try:
-            edge = entity_index_helper.select_edge_by_meta(
-                edge_info
-            )
-            select_entity_in_inventor_app(edge)
+            edge = entity_index_helper.select_edge_by_meta(edge_info)
+            select_entity_in_inventor_app(edge, False)
             edge_collection.Add(edge)
             # Here you would add the edge to a chamfer definition
             # However, the ChamferFeatures API usage is not implemented here
@@ -333,6 +376,9 @@ def _rebuild_chamfer(com_def, feat: Dict[str, Any], entity_index_helper:EntityIn
     elif chamfer_type == "kTwoDistance":
         distance1 = feat.get("distanceOne")
         distance2 = feat.get("distanceTwo")
+    elif chamfer_type == "kDistanceAndAngle":
+        distance1 = feat.get("distance")
+        
     if distance1 is None:
         print("[rebuild] Chamfer missing distance1; skipping chamfer")
         return
@@ -347,11 +393,23 @@ def _rebuild_chamfer(com_def, feat: Dict[str, Any], entity_index_helper:EntityIn
             )
             return
         face_index = feat.get("face")
-        face = entity_index_helper.select_face_by_meta(
-            face_index
-        )
+        face = entity_index_helper.select_face_by_meta(face_index)
         out_feature = com_def.Features.ChamferFeatures.AddUsingTwoDistances(
             edge_collection, face, distance1["expression"], distance2["expression"]
+        )
+    elif chamfer_type == "kDistanceAndAngle":
+        angle = feat.get("angle")
+        if angle is None:
+            print(
+                "[rebuild] Chamfer missing angle for distance-and-angle type; skipping chamfer"
+            )
+            return
+        face_index = feat.get("face")
+        face = entity_index_helper.select_face_by_meta(face_index)
+        select_entity_in_inventor_app(face, False) # debug
+
+        out_feature = com_def.Features.ChamferFeatures.AddUsingDistanceAndAngle(
+            edge_collection, face, distance1["expression"], angle["expression"]
         )
     if out_feature is None:
         print("[rebuild] Failed to create chamfer feature; skipping")
@@ -360,7 +418,9 @@ def _rebuild_chamfer(com_def, feat: Dict[str, Any], entity_index_helper:EntityIn
     pass
 
 
-def _rebuild_hole(com_def, feat: Dict[str, Any], entity_index_helper:EntityIndexHelper):
+def _rebuild_hole(
+    com_def, feat: Dict[str, Any], entity_index_helper: EntityIndexHelper
+):
     depth = feat.get("depth")
     plane_info = feat.get("sketchPlane")
 
@@ -377,7 +437,7 @@ def _rebuild_hole(com_def, feat: Dict[str, Any], entity_index_helper:EntityIndex
     if extent_type is None or hole_type is None:
         raise ValueError("[rebuild] Hole missing extentType or holeType; skipping")
 
-    if extent_type not in ["kDistanceExtent"]:
+    if extent_type not in ["kDistanceExtent", "kThroughAllExtent"]:
         raise ValueError(
             f"[rebuild] Hole extentType {extent_type} not supported; skipping"
         )
@@ -391,9 +451,7 @@ def _rebuild_hole(com_def, feat: Dict[str, Any], entity_index_helper:EntityIndex
     ref_face = None
     if plane_ref_index is not None:
         try:
-            ref_face = entity_index_helper.select_face_by_meta(
-                plane_ref_index
-            )
+            ref_face = entity_index_helper.select_face_by_meta(plane_ref_index)
         except Exception as e:
             print(
                 f"[build_profile] Failed to get work plane by index {plane_ref_index}: {e}; will try geometry info if available"
@@ -462,6 +520,13 @@ def _rebuild_hole(com_def, feat: Dict[str, Any], entity_index_helper:EntityIndex
             is_flat_bottom,
             flat_angle["expression"] if flat_angle else None,
         )
+    elif extent_type == "kThroughAllExtent":
+        direction = extent.get("direction")
+        out_feature = com_def.Features.HoleFeatures.AddDrilledByThroughAllExtent(
+            placement,
+            diameter["expression"],
+            _const(direction),
+        )
     else:
         raise ValueError(
             f"[rebuild] Hole extentType {extent_type} not supported; skipping"
@@ -485,9 +550,7 @@ def _rebuild_shell(
     face_collection = com_def.Application.TransientObjects.CreateFaceCollection()
     for face_info in input_faces:
         try:
-            face = entity_index_helper.select_face_by_meta(
-                face_info
-            )
+            face = entity_index_helper.select_face_by_meta(face_info)
             face_collection.Add(face)
         except Exception as e:
             print(f"[rebuild] Failed to retrieve face for shell: {e}; skipping face")
@@ -501,6 +564,7 @@ def _rebuild_shell(
     return out_feature
     pass
 
+
 def _rebuild_mirror(
     com_def,
     feat: Dict[str, Any],
@@ -511,23 +575,40 @@ def _rebuild_mirror(
     is_mirror_plane_face = feat.get("isMirrorPlaneFace")
     compute_type = feat.get("computeType")
 
-    if mirror_plane_info is None or is_mirror_body is None or is_mirror_plane_face is None or compute_type is None:
-        raise ValueError("[rebuild] Mirror missing mirrorPlane or isMirrorBody; skipping")
+    if (
+        mirror_plane_info is None
+        or is_mirror_body is None
+        or is_mirror_plane_face is None
+        or compute_type is None
+    ):
+        raise ValueError(
+            "[rebuild] Mirror missing mirrorPlane or isMirrorBody; skipping"
+        )
     mirror_entity = None
     if is_mirror_plane_face:
-        mirror_face = entity_index_helper.select_face_by_meta(
-            mirror_plane_info
-        )
+        mirror_face = entity_index_helper.select_face_by_meta(mirror_plane_info)
         mirror_entity = mirror_face
     else:
-        origin_info = mirror_plane_info.get('geometry').get("origin")
-        axis_x_info = mirror_plane_info.get('geometry').get("axis_x")
-        axis_y_info = mirror_plane_info.get('geometry').get("axis_y")
-        origin = (float(origin_info["x"]), float(origin_info["y"]), float(origin_info["z"]))
-        axis_x = (float(axis_x_info["x"]), float(axis_x_info["y"]), float(axis_x_info["z"]))
-        axis_y = (float(axis_y_info["x"]), float(axis_y_info["y"]), float(axis_y_info["z"]))
-        mirror_entity = add_work_plane(com_def,origin, axis_x, axis_y)
-    
+        origin_info = mirror_plane_info.get("geometry").get("origin")
+        axis_x_info = mirror_plane_info.get("geometry").get("axis_x")
+        axis_y_info = mirror_plane_info.get("geometry").get("axis_y")
+        origin = (
+            float(origin_info["x"]),
+            float(origin_info["y"]),
+            float(origin_info["z"]),
+        )
+        axis_x = (
+            float(axis_x_info["x"]),
+            float(axis_x_info["y"]),
+            float(axis_x_info["z"]),
+        )
+        axis_y = (
+            float(axis_y_info["x"]),
+            float(axis_y_info["y"]),
+            float(axis_y_info["z"]),
+        )
+        mirror_entity = add_work_plane(com_def, origin, axis_x, axis_y)
+
     if mirror_entity is None:
         raise ValueError("[rebuild] Unable to create mirror entity; skipping")
     parent_features = transient_obj_collection(com_def.Application)
@@ -537,20 +618,59 @@ def _rebuild_mirror(
     else:
         raise NotImplementedError("Mirroring specific features is not implemented yet.")
     mirror_def = com_def.Features.MirrorFeatures.CreateDefinition(
-        parent_features, mirror_entity, _const(compute_type),
+        parent_features,
+        mirror_entity,
+        _const(compute_type),
     )
     if is_mirror_body:
         remove_original = feat.get("removeOriginal")
         operation = feat.get("operation")
         if remove_original is None or operation is None:
-            raise ValueError("[rebuild] Mirror missing removeOriginal or operation But IsMirrorBody; skipping")
+            raise ValueError(
+                "[rebuild] Mirror missing removeOriginal or operation But IsMirrorBody; skipping"
+            )
         mirror_def.RemoveOriginal = remove_original
         mirror_def.Operation = _const(operation)
-    
+
     out_feature = com_def.Features.MirrorFeatures.AddByDefinition(mirror_def)
     out_feature.Name = feat.get("name", out_feature.Name)
     return out_feature
     pass
+
+
+def _rebuild_circular_pattern(com_def, feat, entity_index_helper: EntityIndexHelper):
+    is_pattern_body = feat.get("isPatternOfBody")
+    axis_info = feat.get("rotationAxis")
+    axis_entity = entity_index_helper.select_entity_by_meta(axis_info)
+    if axis_entity is None:
+        raise ValueError("[rebuild] CircularPattern missing axisEntity; skipping")
+
+    parent_entities = transient_obj_collection(com_def.Application)
+    if is_pattern_body:
+        pattern_body = com_def.SurfaceBodies.Item(1)
+        parent_entities.Add(pattern_body)
+    else:
+        parent_features_info = feat.get("featuresToPattern", [])
+        for feature_info in parent_features_info:
+            feature = get_feature_by_name(com_def, feature_info)
+            parent_entities.Add(feature)
+
+    is_natural_x_dir = feat.get("isNaturalAxisDirection")
+    count = feat.get("count")
+    angle = feat.get("angle")
+    if is_natural_x_dir is None or count is None or angle is None:
+        raise ValueError(
+            "[rebuild] CircularPattern missing isNaturalAxisDirection, count or angle; skipping"
+        )
+    pattern_def = com_def.Features.CircularPatternFeatures.CreateDefinition(
+        parent_entities,
+        axis_entity,
+        is_natural_x_dir,
+        count["expression"],
+        angle["expression"],
+    )
+    out_feature = com_def.Features.CircularPatternFeatures.AddByDefinition(pattern_def)
+    out_feature.Name = feat.get("name", out_feature.Name)
 
 
 def reconstruct_from_json(
@@ -588,6 +708,10 @@ def reconstruct_from_json(
                 _rebuild_shell(com_def, feat, entity_index_helper=entity_index_helper)
             elif ftype == "MirrorFeature":
                 _rebuild_mirror(com_def, feat, entity_index_helper=entity_index_helper)
+            elif ftype == "CircularPatternFeature":
+                _rebuild_circular_pattern(
+                    com_def, feat, entity_index_helper=entity_index_helper
+                )
             else:
                 print(f"[rebuild] Feature {i} type={ftype} not supported yet; skipping")
         except Exception as e:
@@ -601,7 +725,7 @@ if __name__ == "__main__":
 
     if len(sys.argv) < 2:
         print("Usage: python reconstruct_from_json.py <features.json>")
-        json_path = r"E:\Python\PyProjects\Seq2Inventor\data\race-car-tubular-chassis\Formula_output\absorber_body.json"
+        json_path = "E:\\Python\\PyProjects\\Seq2Inventor\\data\\race-car-tubular-chassis\\Formula_output\\axle_middle.json"
 
         reconstruct_from_json(json_path)
     else:

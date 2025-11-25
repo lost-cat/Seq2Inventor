@@ -47,6 +47,10 @@ class Point3D:
         )
 
 
+    def to_tuple(self):
+        return (self.x, self.y, self.z)
+
+
 class PlaneEntity:
     def __init__(self, sketch, entity_index_helper):
         self.plane = sketch.PlanarEntityGeometry
@@ -64,17 +68,17 @@ class PlaneEntity:
                 sketch.AxisEntityGeometry.Direction.CrossProduct(self.plane.Normal)
             )
         self.entity_index_helper = entity_index_helper
-
-    def plane_entity_ref(self):
         if self.plane_entity is None:
-            return None
-        try:
-            # Local import to avoid circular dependency
-            from .metadata import collect_face_metadata
+            try:
+                # Local import to avoid circular dependency
+                from .metadata import collect_face_metadata
 
-            return collect_face_metadata(self.plane_entity)
-        except Exception:
-            return None
+                self.plane_entity_ref =  collect_face_metadata(self.plane_entity)
+            except Exception:
+                self.plane_entity_ref = None
+                print("Warning: Unable to collect metadata for plane entity.")
+        
+        pass
 
     def __repr__(self):
         return (
@@ -103,8 +107,28 @@ class PlaneEntity:
                 "axis_x": self.axis_x,
                 "axis_y": self.axis_y,
             },
-            "index": self.plane_entity_ref(),
+            "index": self.plane_entity_ref if hasattr(self, "plane_entity_ref") else None,
         }
+    
+    @classmethod
+    def from_dict(cls, d: dict, entity_index_helper) -> "PlaneEntity":
+        instance = PlaneEntity.__new__(PlaneEntity)
+        geom = d.get("geometry", {})
+        origin = geom.get("origin", {})
+        normal = geom.get("normal", {})
+        axis_x = geom.get("axis_x", {})
+        axis_y = geom.get("axis_y", {})
+        instance.origin = Point3D(origin.get("x",0), origin.get("y",0), origin.get("z",0))
+        instance.normal = Point3D(normal.get("x",0), normal.get("y",0), normal.get("z",0))
+        instance.axis_x = Point3D(axis_x.get("x",0), axis_x.get("y",0), axis_x.get("z",0))
+        instance.axis_y = Point3D(axis_y.get("x",0), axis_y.get("y",0), axis_y.get("z",0))
+        instance.plane = None
+        instance.plane_entity = None
+        instance.entity_index_helper = entity_index_helper
+        index  = d.get("index")
+        if index is not None:
+            instance.plane_entity_ref = index
+        return instance
 
 
 class AxisEntity:
