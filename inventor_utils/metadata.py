@@ -3,7 +3,7 @@ from typing import Tuple
 
 import numpy
 
-from .geometry import Point3D
+from .geometry import AxisEntityWrapper, Point3D
 from .enums import enum_name, is_type_of
 
 
@@ -25,6 +25,13 @@ def collect_entity_metadata(entity, tol: float = 1e-3) -> dict:
         return collect_face_metadata(entity, tol)
     if is_type_of(entity, "Edge"):
         return collect_edge_metadata(entity, tol)
+    
+    if is_type_of(entity, "WorkAxis"):
+        return AxisEntityWrapper(entity,None).to_dict()
+    
+    if is_type_of(entity, "WorkPlane"):
+        from .geometry import PlaneEntityWrapper
+        return PlaneEntityWrapper.from_work_plane(entity,None).to_dict()
     
     raise ValueError(f"Unsupported entity type {enum_name(entity.Type)} for metadata collection")
 

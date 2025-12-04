@@ -6,7 +6,7 @@
             "request": "launch",
             "program": "${cwd}/batch_sequence_extract.py",
             "console": "integratedTerminal",
-            "args": "--part_dir ${command:pickArgs}  --start ${command:pickArgs}"
+            "args": "--part_dir ${command:pickArgs}  --start 0"
         },
         {
             "name": "SequenceExtract",
@@ -35,5 +35,12 @@
             "program": "${cwd}/reconstruct_from_json.py",
             "args": "E:\\Python\\PyProjects\\Seq2Inventor\\features_test_inventor_1.json"
         },
+        {
+            "name": "reconstruct_models_step_by_step",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${cwd}/reconstruct_models_step_by_step.py",
+            "args": "--source E:\\Python\\PyProjects\\Seq2Inventor\\data\\race-car-tubular-chassis\\output --output_root E:\\Python\\PyProjects\\Seq2Inventor\\data\\race-car-tubular-chassis\\Formula_step_by_step --start 0"
+        }
     ]
 }

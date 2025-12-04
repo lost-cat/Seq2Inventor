@@ -1,7 +1,7 @@
 from typing import Optional, Any
 
 from inventor_utils.enums import enum_name
-from inventor_utils.geometry import Point3D
+from inventor_utils.geometry import PlaneEntityWrapper, Point3D
 
 from .metadata import (
     collect_face_metadata,
@@ -89,6 +89,12 @@ class EntityIndexHelper:
             return self.select_face_by_meta(entity_meta)
         elif meta_type == "Edge":
             return self.select_edge_by_meta(entity_meta)
+        elif meta_type == "PlaneEntity":
+            from .geometry import PlaneEntityWrapper
+            return PlaneEntityWrapper.from_dict(entity_meta,None).to_work_plane(self.com_def)
+        elif meta_type == "AxisEntity":
+            from .geometry import AxisEntityWrapper
+            return AxisEntityWrapper.from_dict(entity_meta,None).to_work_axis(self.com_def)
         else:
             raise ValueError(f"Unsupported metaType: {meta_type}")
 
@@ -102,7 +108,7 @@ class EntityIndexHelper:
             if ok:
                 selected_key = key
             else:
-                print(f"[debug] Face meta not similar: {reason}")
+                pass
         if selected_key is None:
             raise ValueError("No matching face found")
         return self.cached_face_meta_map[selected_key]["face"]

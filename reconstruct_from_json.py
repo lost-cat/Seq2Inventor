@@ -14,6 +14,7 @@ from inventor_utils.app import add_part_document, get_inventor_application
 from inventor_utils.enums import _const
 from inventor_utils.features import (
     add_sketch2d_arc,
+    add_sketch2d_bspline,
     add_sketch2d_circle,
     add_sketch2d_line,
     add_sketch2d_point,
@@ -21,7 +22,8 @@ from inventor_utils.features import (
     add_work_plane,
     add_work_point,
 )
-from inventor_utils.geometry import PlaneEntity
+
+from inventor_utils.geometry import PlaneEntityWrapper
 from inventor_utils.indexing import EntityIndexHelper, get_feature_by_name
 from inventor_utils.transient import (
     add_sketch,
@@ -64,6 +66,8 @@ def _draw_path_on_sketch(sketch, path: Dict[str, Any]) -> None:
             ep2 = first_sketch_curve.StartSketchPoint if first_sketch_curve else None
         else:
             ep2 = transient_point_2d(app, ep["x"], ep["y"]) if ep else None
+
+
         try:
             if ctype == "kLineSegmentCurve2d" and sp and ep:
 
@@ -89,6 +93,9 @@ def _draw_path_on_sketch(sketch, path: Dict[str, Any]) -> None:
                 current_sketch_curve = add_sketch2d_arc(
                     sketch, cpt, sp2, ep2, is_counter_clock
                 )
+            elif ctype == "kBSplineCurve2d" and curve:
+                current_sketch_curve = add_sketch2d_bspline(sketch, curve['bSplineData'],sp2,ep2)
+                pass
             else:
                 print(f"[draw_path] Unhandled curve type {ctype}; skipping")
                 pass
@@ -205,19 +212,23 @@ def _rebuild_extrude(
             if dist2 is not None:
                 ext_def.SetDistanceExtentTwo(dist2["expression"])
     elif ext_type == "kToExtent":
-        extent_to_face: bool = extent.get("extentToFace")  # type: ignore
+        #   d['type'] = "ToExtent"
+        # d["toEntity"] = self.to_entity
+        # d["direction"] = self.direction
+        # d["extendToFace"] = self.extend_to_face
+        extend_to_face: bool = extent.get("extendToFace")  # type: ignore
         to_entity = entity_index_helper.select_face_by_meta(extent.get("toEntity"))
         # select_entity_in_inventor_app(to_entity)
         if to_entity is None:
             raise ValueError(
                 "[rebuild] Extrude missing toEntity for ToExtent; skipping extrude"
             )
-        ext_def.SetToExtent(to_entity, extent_to_face)
+        ext_def.SetToExtent(to_entity, extend_to_face)
     elif ext_type == "kFromToExtent":
         if extent.get("isFromFaceWorkPlane") is False:
             from_face = entity_index_helper.select_face_by_meta(extent.get("fromFace"))
         else:
-            work_plane = PlaneEntity.from_dict(
+            work_plane = PlaneEntityWrapper.from_dict(
                 extent.get("fromFace"), entity_index_helper=entity_index_helper
             )
             from_face = add_work_plane(
@@ -230,7 +241,7 @@ def _rebuild_extrude(
         if extent.get("isToFaceWorkPlane") is False:
             to_face = entity_index_helper.select_face_by_meta(extent.get("toFace"))
         else:
-            work_plane = PlaneEntity.from_dict(
+            work_plane = PlaneEntityWrapper.from_dict(
                 extent.get("toFace"), entity_index_helper=entity_index_helper
             )
             to_face = add_work_plane(
@@ -248,6 +259,9 @@ def _rebuild_extrude(
         extend_from_face: bool = extent.get("extendFromFace")  # type: ignore
         extend_to_face: bool = extent.get("extendToFace")  # type: ignore
         ext_def.SetFromToExtent(from_face, extend_from_face, to_face, extend_to_face)
+    elif ext_type == "kToNextExtent":
+        surface_body = com_def.SurfaceBodies.Item(1)
+        ext_def.SetToNextExtent(dir_const, surface_body)
 
     out_feature = ext_feats.Add(ext_def)
     out_feature.Name = feat.get("name", out_feature.Name)
@@ -672,6 +686,85 @@ def _rebuild_circular_pattern(com_def, feat, entity_index_helper: EntityIndexHel
     out_feature = com_def.Features.CircularPatternFeatures.AddByDefinition(pattern_def)
     out_feature.Name = feat.get("name", out_feature.Name)
 
+def _rebuild_rectangular_pattern(com_def, feat, entity_index_helper: EntityIndexHelper):
+    is_pattern_body = feat.get("isPatternOfBody")
+    x_direction_entity_info = feat.get("xDirectionEntity")
+    x_count = feat.get("xCount")
+    x_spacing = feat.get("xSpacing")
+    x_natural_dir = feat.get("xNaturalDirection")
+    x_spacing_type = feat.get("xSpacingType")
+    x_spacing_type = _const(x_spacing_type)
+    if (
+        x_direction_entity_info is None
+        or x_count is None
+        or x_spacing is None
+        or x_natural_dir is None
+        or x_spacing_type is None
+    ):
+        raise ValueError(
+            "[rebuild] RectangularPattern missing xDirectionEntity, xCount, xSpacing, xNaturalDirection or xSpacingType; skipping"
+        )
+    
+
+    x_direction_entity = entity_index_helper.select_entity_by_meta(x_direction_entity_info)
+    if x_direction_entity is None:
+        raise ValueError("[rebuild] RectangularPattern missing xDirectionEntity; skipping")
+    
+    parent_entities = transient_obj_collection(com_def.Application)
+    if is_pattern_body:
+        pattern_body = com_def.SurfaceBodies.Item(1)
+        parent_entities.Add(pattern_body)
+    else:
+        parent_features_info = feat.get("featuresToPattern", [])
+        for feature_info in parent_features_info:
+            feature = get_feature_by_name(com_def, feature_info)
+            parent_entities.Add(feature)
+    pattern_def = com_def.Features.RectangularPatternFeatures.CreateDefinition(
+        parent_entities,
+        x_direction_entity,
+        x_natural_dir,
+        x_count["expression"],
+        x_spacing["expression"],
+        x_spacing_type,
+    ) 
+    out_feature = com_def.Features.RectangularPatternFeatures.AddByDefinition(pattern_def)
+    out_feature.Name = feat.get("name", out_feature.Name)
+
+def _rebuild_sweep(com_def, feat, entity_index_helper=None):
+    raise NotImplementedError("Sweep feature reconstruction not implemented yet.")
+
+
+def _rebuild_feature(
+    com_def, feat: Dict[str, Any], entity_index_helper: EntityIndexHelper
+):
+    ftype = feat.get("type")
+    if ftype == "ExtrudeFeature":
+        return _rebuild_extrude(com_def, feat, entity_index_helper=entity_index_helper)
+    elif ftype == "RevolveFeature":
+        return _rebuild_revolve(com_def, feat, entity_index_helper=entity_index_helper)
+    elif ftype == "FilletFeature":
+        return _rebuild_fillet(com_def, feat, entity_index_helper=entity_index_helper)
+    elif ftype == "ChamferFeature":
+        return _rebuild_chamfer(com_def, feat, entity_index_helper=entity_index_helper)
+    elif ftype == "HoleFeature":
+        return _rebuild_hole(com_def, feat, entity_index_helper=entity_index_helper)
+    elif ftype == "ShellFeature":
+        return _rebuild_shell(com_def, feat, entity_index_helper=entity_index_helper)
+    elif ftype == "MirrorFeature":
+        return _rebuild_mirror(com_def, feat, entity_index_helper=entity_index_helper)
+    elif ftype == "CircularPatternFeature":
+        return _rebuild_circular_pattern(
+            com_def, feat, entity_index_helper=entity_index_helper
+        )
+    elif ftype == 'RectangularPatternFeature':
+        return _rebuild_rectangular_pattern(
+            com_def, feat, entity_index_helper=entity_index_helper
+        )
+    elif ftype == "SweepFeature":
+        return _rebuild_sweep(com_def, feat, entity_index_helper=entity_index_helper)
+    else:
+        print(f"[rebuild] Feature type={ftype} not supported yet; skipping")
+        return None
 
 def reconstruct_from_json(
     json_path: str, *, app=None, new_part_name: str = "Reconstructed"
@@ -694,26 +787,7 @@ def reconstruct_from_json(
         ftype = feat.get("type")
 
         try:
-            if ftype == "ExtrudeFeature":
-                _rebuild_extrude(com_def, feat, entity_index_helper=entity_index_helper)
-            elif ftype == "RevolveFeature":
-                _rebuild_revolve(com_def, feat, entity_index_helper=entity_index_helper)
-            elif ftype == "FilletFeature":
-                _rebuild_fillet(com_def, feat, entity_index_helper=entity_index_helper)
-            elif ftype == "ChamferFeature":
-                _rebuild_chamfer(com_def, feat, entity_index_helper=entity_index_helper)
-            elif ftype == "HoleFeature":
-                _rebuild_hole(com_def, feat, entity_index_helper=entity_index_helper)
-            elif ftype == "ShellFeature":
-                _rebuild_shell(com_def, feat, entity_index_helper=entity_index_helper)
-            elif ftype == "MirrorFeature":
-                _rebuild_mirror(com_def, feat, entity_index_helper=entity_index_helper)
-            elif ftype == "CircularPatternFeature":
-                _rebuild_circular_pattern(
-                    com_def, feat, entity_index_helper=entity_index_helper
-                )
-            else:
-                print(f"[rebuild] Feature {i} type={ftype} not supported yet; skipping")
+            _rebuild_feature(com_def, feat, entity_index_helper=entity_index_helper)
         except Exception as e:
             print(f"[rebuild] Failed to rebuild feature {i}: {e}")
         entity_index_helper.update_all()
@@ -725,7 +799,7 @@ if __name__ == "__main__":
 
     if len(sys.argv) < 2:
         print("Usage: python reconstruct_from_json.py <features.json>")
-        json_path = "E:\\Python\\PyProjects\\Seq2Inventor\\data\\race-car-tubular-chassis\\Formula_output\\axle_middle.json"
+        json_path = r"E:\Python\PyProjects\Seq2Inventor\test_inventor_1_features.json"
 
         reconstruct_from_json(json_path)
     else:

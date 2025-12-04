@@ -4,6 +4,7 @@ import numpy as np
 
 
 
+
 def _emit(line: str, out: Optional[TextIO] = None) -> None:
     if out is None:
         print(line)
@@ -79,7 +80,8 @@ def _json_default(obj):
         CircleCurve2d,
         Curve2d,
         SketchPoint,
-        AxisEntity,
+        AxisEntityWrapper,
+        BSplineCurve2d,
     )
     from feature_wrappers import InventorObjectWrapper
     if isinstance(obj, Parameter):
@@ -131,13 +133,19 @@ def _json_default(obj):
             "center": {"x": c.x, "y": c.y},
             "radius": obj.radius,
         }
+    if isinstance(obj, BSplineCurve2d):
+        return {
+            'type': 'BSplineCurve2d',
+            'bSplineData': obj.get_bspline_data(),
+
+        }
     if isinstance(obj, Curve2d):
         return {"type": "Curve2d"}
-
+    
     if isinstance(obj, InventorObjectWrapper):
         return obj.to_dict()
 
-    if isinstance(obj, AxisEntity):
+    if isinstance(obj, AxisEntityWrapper):
         return obj.to_dict()
     raise TypeError(
         f"Object of type {obj.__class__.__name__} is not JSON serializable"

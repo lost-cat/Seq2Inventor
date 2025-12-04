@@ -1,6 +1,6 @@
 
 from inventor_utils.enums import enum_name, is_type_of
-from inventor_utils.geometry import Parameter, PlaneEntity
+from inventor_utils.geometry import Parameter, PlaneEntityWrapper
 from win32com.client import constants, CastTo
 
 
@@ -37,8 +37,10 @@ class ExtentFactory:
             return ThroughAllExtentWrapper.from_inventor(extent)
         elif is_type_of(extent, "FromToExtent"):
             return FromToExtentWrapper.from_inventor(extent)
+        elif is_type_of(extent, "ToNextExtent"):
+            return ToNextExtentWrapper.from_inventor(extent)
         else:
-            raise ValueError(f"Unsupported extent type: {extent_type_name}")
+            raise ValueError(f"Unsupported extent type: {enum_name(extent_type_name)}")
 
 
 
@@ -133,11 +135,30 @@ class ToExtentWrapper(ExtentWrapper):
     def to_dict(self) -> dict:
         d = {}
         d['type'] = "ToExtent"
-        d["to_entity"] = self.to_entity
+        d["toEntity"] = self.to_entity
         d["direction"] = self.direction
-        d["extend_to_face"] = self.extend_to_face
+        d["extendToFace"] = self.extend_to_face
         return d 
     pass
+
+class ToNextExtentWrapper(ExtentWrapper):
+    direction: str
+
+    @classmethod
+    def from_inventor(cls,extent): # type: ignore
+        if is_type_of(extent, "ToNextExtent") is False:
+            raise ValueError("Extent is not of type ToNextExtent")
+        instance = cls()
+        instance.type = "ToNextExtent"
+        instance.inventor_extent = CastTo(extent, "ToNextExtent")
+        instance.direction = enum_name(instance.inventor_extent.Direction) # type: ignore
+        return instance
+    def to_dict(self) -> dict:
+        return {
+            "type": "ToNextExtent",
+            'direction': self.direction,
+        }
+
 
 class FullSweepExtentWrapper(ExtentWrapper):
     @classmethod
@@ -193,13 +214,13 @@ class FromToExtentWrapper(ExtentWrapper):
             instance.from_face = collect_face_metadata(instance.inventor_extent.FromFace)
             instance.is_from_face_work_plane = False
         else:
-            instance.from_face = PlaneEntity.from_work_plane(instance.inventor_extent.FromFace, None).to_dict()
+            instance.from_face = PlaneEntityWrapper.from_work_plane(instance.inventor_extent.FromFace, None).to_dict()
             instance.is_from_face_work_plane = True
         if is_type_of(instance.inventor_extent.ToFace, "Face") is True:
             instance.to_face = collect_face_metadata(instance.inventor_extent.ToFace)
             instance.is_to_face_work_plane = False
         else:
-            instance.to_face = PlaneEntity.from_work_plane(instance.inventor_extent.ToFace, None).to_dict()
+            instance.to_face = PlaneEntityWrapper.from_work_plane(instance.inventor_extent.ToFace, None).to_dict()
             instance.is_to_face_work_plane = True
         instance.extend_from_face = instance.inventor_extent.ExtendFromFace
         instance.extend_to_face = instance.inventor_extent.ExtendToFace

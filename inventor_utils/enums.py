@@ -92,7 +92,7 @@ def is_type_of(entity, class_name: str) -> bool:
         class_name = 'k' + class_name + 'Object'
         return enum_name(obj_class_name) == class_name
     except Exception:
-        raise ValueError("Failed to get the Type of the entity.")
+        print(f"Failed to get the Type of the entity.")
         return False
     
 

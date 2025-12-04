@@ -6,6 +6,7 @@ from win32com.client import constants
 
 from cad_utils.curves import Line, Circle, Arc
 from cad_utils.macro import EXTENT_TYPE, BODY_OPERATIONS
+from inventor_utils.enums import is_type_of
 from inventor_utils.transient import add_sketch, transient_point_2d
 
 
@@ -202,6 +203,62 @@ def add_sketch2d_circle(sketch, center, radius):
     circle = sketch.SketchCircles.AddByCenterRadius(center, radius)
     return circle
 
+def add_sketch2d_bspline(sketch, data,sp,ep):
+                #     "bSplineData": {
+                #   "poles": [
+                #     -2.5568525014447303,
+                #     1.1136117152526785,
+                #     -2.4499457766456474,
+                #     -0.3414420337953672,
+                #     -2.9844794006410615,
+                #     -1.8619587879024786,
+                #     -4.017911073698862,
+                #     -0.8819804784801215,
+                #     -5.318609558754369,
+                #     0.9710694157003358,
+                #     -5.8531431827497835,
+                #     -1.8619587879024786
+                #   ],
+                #   "knots": [
+                #     1.0,
+                #     1.0,
+                #     1.0,
+                #     1.0,
+                #     1.0,
+                #     2.0,
+                #     3.0,
+                #     3.0,
+                #     3.0,
+                #     3.0,
+                #     3.0
+                #   ],
+                #   "weights": null,
+                #   "order": 5,
+                #   "num_poles": 6,
+                #   "num_knots": 11,
+                #   "is_rational": false,
+                #   "is_periodic": false,
+                #   "is_closed": false
+                # }
+    
+    tg = sketch.Application.TransientGeometry
+    poles = [float(v) for v in data.get("poles", [])]
+    knots = [float(v) for v in data.get("knots", [])]
+    weights = data.get('weights', None)
+    if weights is None:
+        weights = [1.0] * (len(poles) // 2)
+    else:
+        weights = [float(v) for v in weights]
+    order = data['order']
+    is_periodic = data['is_periodic']
+    spline_curve_2d,_,_,_ = tg.CreateBSplineCurve2d(order,poles,knots,weights,is_periodic)
+    sfs = sketch.SketchFixedSplines
+    spline = sfs.Add(spline_curve_2d,sp if is_type_of(sp,'SketchPoint') else None,ep if is_type_of(ep,'SketchPoint') else None)
+    return spline
+
+
+    
+    pass
 
 def add_sketch2d_point(sketch, point, is_hole_center=True):
     sketch_point = sketch.SketchPoints.Add(point, is_hole_center)

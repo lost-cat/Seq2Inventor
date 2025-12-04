@@ -1,0 +1,28 @@
+[
+  [
+    "e:features_test_inventor_0.json",
+    {
+      "error_step_1": "Failed to rebuild feature 1: [rebuild] Extrude missing extent; skipping extrude"
+    }
+  ],
+  [
+    "e:features_test_inventor_0_vec.json",
+    {
+      "error": "No features in e:features_test_inventor_0_vec.json"
+    }
+  ],
+  [
+    "e:features_test_inventor_1.json",
+    {
+      "error_step_1": "Failed to rebuild feature 1: [rebuild] Extrude missing extent; skipping extrude"
+    }
+  ],
+  [
+    "e:test_inventor_1_features.json",
+    {
+      "error_step_1": "ok",
+      "error_step_2": "ok",
+      "error_step_3": "ok"
+    }
+  ]
+]

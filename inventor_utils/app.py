@@ -1,4 +1,76 @@
+from contextlib import contextmanager
 import win32com.client
+import pythoncom
+import time
+import threading
+_COM_STATE = threading.local()
+
+
+def init_com_apartment()->bool:
+    """确保当前线程初始化为 STA。重复调用安全。"""
+    if getattr(_COM_STATE, "initialized", False):
+        return False
+
+    pythoncom.CoInitializeEx(pythoncom.COINIT_APARTMENTTHREADED)
+    _COM_STATE.initialized = True
+    return True
+
+def uninit_com_apartment():
+    """与 init_com_apartment 成对调用，仅在本线程初始化过时反初始化。"""
+    if getattr(_COM_STATE, "initialized", False):
+        try:
+            pythoncom.CoUninitialize()
+        except Exception:
+            pass
+        _COM_STATE.initialized = False
+
+@contextmanager
+def com_sta():
+    """COM STA 上下文管理器，保证成对初始化/释放。"""
+    inited = init_com_apartment()
+    try:
+        yield
+    finally:
+        # 注意：请在调用处先释放 Inventor 对象引用，再退出上下文
+        if inited:
+            uninit_com_apartment()
+def pump_waiting_messages():
+    """泵 COM/UI 消息，避免 Inventor 卡住。"""
+    try:
+        pythoncom.PumpWaitingMessages()
+    except Exception:
+        pass
+
+def sleep_with_pump(seconds: float):
+    """带消息泵的短睡眠。"""
+    end = time.time() + seconds
+    while time.time() < end:
+        pump_waiting_messages()
+        time.sleep(0.01)
+
+def set_inventor_silent(app, enable: bool = True):
+    """尽量关闭 UI 干扰（属性存在才设置）。"""
+    try:
+        uim = app.UserInterfaceManager
+        uim.UserInteractionDisabled = bool(enable)
+    except Exception:
+        pass
+    try:
+        app.SilentOperation = bool(enable)
+    except Exception:
+        pass
+    try:
+        app.ScreenUpdating = not bool(enable)
+    except Exception:
+        pass
+
+def doevents(app):
+    """调用 Inventor 的 DoEvents（若可用），并泵消息。"""
+    try:
+        app.UserInterfaceManager.DoEvents()
+    except Exception:
+        pass
+    pump_waiting_messages()
 
 
 def get_inventor_application():

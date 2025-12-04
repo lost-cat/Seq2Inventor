@@ -18,13 +18,14 @@ from inventor_utils.enums import (
 from inventor_utils.extent_types import ExtentFactory
 from inventor_utils.geometry import (
     Arc2d,
+    BSplineCurve2d,
     CircleCurve2d,
     Curve2d,
     LineSegment2d,
     Parameter,
+    PlaneEntityWrapper,
     Point2D,
-    AxisEntity,
-    PlaneEntity,
+    AxisEntityWrapper,
     SketchPoint,
 )
 from inventor_utils.indexing import EntityIndexHelper
@@ -86,15 +87,17 @@ class ProfileEntity(InventorObjectWrapper):
         data["CurveType"] = enum_name(getattr(self.i_object, "CurveType"))
         if self.i_object.StartSketchPoint is not None:
             data["StartSketchPoint"] = SketchPoint(self.i_object.StartSketchPoint)
-
         if self.i_object.EndSketchPoint is not None:
             data["EndSketchPoint"] = SketchPoint(self.i_object.EndSketchPoint)
+
         if data["CurveType"] == "kCircularArcCurve2d":
             data["Curve"] = Arc2d(self.i_object.Curve)
         elif data["CurveType"] == "kLineSegmentCurve2d":
             data["Curve"] = LineSegment2d(self.i_object.Curve)
         elif data["CurveType"] == "kCircleCurve2d":
             data["Curve"] = CircleCurve2d(self.i_object.Curve)
+        elif data["CurveType"] == "kBSplineCurve2d":
+            data["Curve"] = BSplineCurve2d(self.i_object.Curve)
         else:
             print(f"Warning: Unhandled CurveType {data['CurveType']}")
             data["Curve"] = None
@@ -173,7 +176,7 @@ class ProfileWrapper(InventorObjectWrapper):
             if ok_nm:
                 data["sketchName"] = sk_name
                 planar_sketch = CastTo(sketch, "PlanarSketch")
-                sketch_plane = PlaneEntity(
+                sketch_plane = PlaneEntityWrapper(
                     planar_sketch, entity_index_helper=self.entity_index_helper
                 )
                 data["SketchPlane"] = sketch_plane.to_dict()
@@ -211,6 +214,60 @@ class ProfileWrapper(InventorObjectWrapper):
         for j, ppw in enumerate(d.get("ProfilePaths", []), start=1):
             _emit(f"{prefix}  Path {j}:", out)
             ppw.pretty_print(prefix + "    ", out)
+
+
+class PathEntityWrapper(InventorObjectWrapper):
+    def __init__(
+        self, i_object, entity_index_helper: Optional[EntityIndexHelper] = None
+    ) -> None:
+        super().__init__(i_object, entity_index_helper=entity_index_helper)
+
+    def to_dict(self) -> Dict[str, Any]:
+        data = super().to_dict()
+        data.update(collect_entity_metadata(self.i_object))
+        return data
+
+    def pretty_print(self, prefix: str = "", out: Optional[TextIO] = None) -> None:
+        d = self.to_dict()
+        _emit(f"{prefix}PathEntity: Type={d.get('entityType','?')}", out)
+        super().pretty_print(prefix, out)
+
+
+class PathWrapper(InventorObjectWrapper):
+    def __init__(
+        self, i_object, entity_index_helper: Optional[EntityIndexHelper] = None
+    ) -> None:
+        super().__init__(i_object, entity_index_helper=entity_index_helper)
+
+    def to_dict(self) -> Dict[str, Any]:
+        data = super().to_dict()
+        data["PathEntities"] = []
+        try:
+            count = getattr(self.i_object, "Count", 0)
+        except Exception:
+            count = 0
+        for i in range(1, count + 1):
+            try:
+                path_entity = self.i_object.Item(i)
+            except Exception:
+                continue
+            data["PathEntities"].append(
+                PathEntityWrapper(
+                    path_entity, entity_index_helper=self.entity_index_helper
+                ).to_dict()
+            )
+        return data
+
+    def pretty_print(self, prefix: str = "", out: Optional[TextIO] = None) -> None:
+        d = self.to_dict()
+        _emit(
+            f"{prefix}Path: Entities={len(d.get('PathEntities', []))}",
+            out,
+        )
+        super().pretty_print(prefix, out)
+        for j, pew in enumerate(d.get("PathEntities", []), start=1):
+            _emit(f"{prefix}  Entity {j}:", out)
+            pew.pretty_print(prefix + "    ", out)
 
 
 # ------------------ Feature Wrappers ------------------
@@ -301,7 +358,7 @@ class RevolveFeatureWrapper(BaseFeatureWrapper):
 
         d = super().to_dict()
         d["featureType"] = "RevolveFeature"
-        d["axisEntity"] = AxisEntity(
+        d["axisEntity"] = AxisEntityWrapper(
             self.feature.AxisEntity, entity_index_helper=self.entity_index_helper
         ).to_dict()
 
@@ -477,11 +534,13 @@ class HoleFeatureWrapper(BaseFeatureWrapper):
         d["extentType"] = extent_type_name(self.feature.ExtentType)
         d["extent"] = ExtentFactory.from_inventor(self.feature.Extent).to_dict()
         d["isFlatBottomed"] = self.feature.FlatBottom
-        if not d["isFlatBottomed"]:
-            d["bottomTipAngle"] = Parameter(self.feature.BottomTipAngle)
+        if not  d["isFlatBottomed"]:
+            if self.feature.BottomTipAngle is not None:
+                d["bottomTipAngle"] = Parameter(self.feature.BottomTipAngle)
 
-        d["sketchPlane"] = PlaneEntity(
-            self.feature.Sketch, entity_index_helper=self.entity_index_helper
+        planar_sketch = CastTo(self.feature.Sketch, "PlanarSketch")
+        d["sketchPlane"] = PlaneEntityWrapper(
+            planar_sketch, entity_index_helper=self.entity_index_helper
         ).to_dict()
         d["placementType"] = enum_name(self.feature.PlacementType)
 
@@ -565,7 +624,7 @@ class MirrorFeatureWrapper(BaseFeatureWrapper):
         _, d["name"] = self._safe_get(self.feature, "Name")
         mirror_def = self.feature.Definition
         if is_type_of(mirror_def.MirrorPlaneEntity, "WorkPlane"):
-            d["mirrorPlane"] = PlaneEntity.from_work_plane(
+            d["mirrorPlane"] = PlaneEntityWrapper.from_work_plane(
                 mirror_def.MirrorPlaneEntity,
                 entity_index_helper=self.entity_index_helper,
             ).to_dict()
@@ -605,7 +664,21 @@ class RectangularPatternFeatureWrapper(BaseFeatureWrapper):
         d = super().to_dict()
         d["type"] = "RectangularPatternFeature"
         _, d["name"] = self._safe_get(self.feature, "Name")
-        # todo
+        defn = self.feature.Definition
+        d['xCount'] = Parameter(defn.XCount)
+        d['xSpacing'] = Parameter(defn.XSpacing)
+        d['xNaturalDirection'] = defn.NaturalXDirection
+        x_direction_entity = defn.XDirectionEntity
+        d['xDirectionEntity'] = collect_entity_metadata(x_direction_entity)
+        d['xSpacingType'] = enum_name(defn.XDirectionSpacingType)
+        d['isPatternOfBody'] = defn.PatternOfBody
+        if not d["isPatternOfBody"]:
+            features_to_pattern = []
+            for i in range(1, defn.ParentFeatures.Count + 1):
+                feat = defn.ParentFeatures.Item(i)
+                features_to_pattern.append(getattr(feat, "Name", "<unknown>"))
+            d["featuresToPattern"] = features_to_pattern
+
         return d
 
 
@@ -637,6 +710,73 @@ class CircularPatternFeatureWrapper(BaseFeatureWrapper):
         return d
 
 
+class SweepFeatureWrapper(BaseFeatureWrapper):
+    def __init__(
+        self, i_object, entity_index_helper: Optional[EntityIndexHelper] = None
+    ) -> None:
+        super().__init__(i_object, entity_index_helper=entity_index_helper)
+        self.feature = CastTo(i_object, "SweepFeature")
+        self.friendly_type = "SweepFeature"
+
+    def to_dict(self) -> Dict[str, Any]:
+        d = super().to_dict()
+        d["type"] = "SweepFeature"
+        _, d["name"] = self._safe_get(self.feature, "Name")
+        is_solid_sweep = self.feature.IsSolidSweep
+        if is_solid_sweep:
+            raise NotImplementedError("Solid sweeps not implemented in to_dict")
+        defn = self.feature.Definition
+        d["operation"] = operation_name(defn.Operation)
+        sweep_type = enum_name(defn.SweepType)
+        d["sweepType"] = sweep_type
+        if d["sweepType"] != "kPathSweepType":
+            raise NotImplementedError(
+                f"Sweep type {d['sweepType']} not implemented in to_dict"
+            )
+        # Profile
+        ok_p, prof = self._safe_get(defn, "Profile")
+        if ok_p and prof is not None:
+            d["profile"] = ProfileWrapper(
+                prof, entity_index_helper=self.entity_index_helper
+            ).to_dict()
+        # Path
+        ok_path, path = self._safe_get(defn, "Path")
+        if ok_path and path is not None:
+            d["path"] = ProfilePathWrapper(
+                path, entity_index_helper=self.entity_index_helper
+            ).to_dict()
+        return d
+
+# class LoftFeatureWrapper(BaseFeatureWrapper):
+#     def __init__(
+#         self, i_object, entity_index_helper: Optional[EntityIndexHelper] = None
+#     ) -> None:
+#         super().__init__(i_object, entity_index_helper=entity_index_helper)
+#         self.feature = CastTo(i_object, "LoftFeature")
+#         self.friendly_type = "LoftFeature"
+
+#     def to_dict(self) -> Dict[str, Any]:
+#         d = super().to_dict()
+#         d["type"] = "LoftFeature"
+#         _, d["name"] = self._safe_get(self.feature, "Name")
+#         defn = self.feature.Definition
+#         d["operation"] = operation_name(defn.Operation) or defn.Operation
+#         d["isSolid"] = defn.Solid
+#         d["isClosed"] = defn.Closed
+#         d["profileCount"] = defn.ProfileCount
+#         d["profiles"] = []
+#         for i in range(1, defn.ProfileCount + 1):
+#             try:
+#                 prof = defn.ProfileItem(i)
+#                 d["profiles"].append(
+#                     ProfileWrapper(
+#                         prof, entity_index_helper=self.entity_index_helper
+#                     ).to_dict()
+#                 )
+#             except Exception:
+#                 continue
+#         return d
+
 # --------------- Factory -----------------
 
 _WRAPPER_MAP: Dict[str, Type[BaseFeatureWrapper]] = {
@@ -649,6 +789,7 @@ _WRAPPER_MAP: Dict[str, Type[BaseFeatureWrapper]] = {
     "MirrorFeature": MirrorFeatureWrapper,
     "RectangularPatternFeature": RectangularPatternFeatureWrapper,
     "CircularPatternFeature": CircularPatternFeatureWrapper,
+    "SweepFeature": SweepFeatureWrapper,
 }
 
 
@@ -679,7 +820,8 @@ def wrap_feature(
                 kind = "RectangularPatternFeature"
             elif tval == getattr(constants, "kCircularPatternFeatureObject"):
                 kind = "CircularPatternFeature"
-
+            elif tval == getattr(constants, "kSweepFeatureObject"):
+                kind = "SweepFeature"
         except Exception as e:
             print(f"Warning: Could not determine feature type: {e}")
             pass
@@ -695,8 +837,11 @@ def wrap_feature(
 
 
 def features_to_dict_list(features, *, doc) -> List[Dict[str, Any]]:
+    from inventor_utils.utils import _json_default, clear_selection_in_inventor_app
+    from inventor_utils.app import pump_waiting_messages  # 新增
     out: List[Dict[str, Any]] = []
     entity_ref_helper = EntityIndexHelper(doc.ComponentDefinition)
+    app = doc.ComponentDefinition.Application
     for feat in features:
         try:
             feat.SetEndOfPart(True)
@@ -711,6 +856,14 @@ def features_to_dict_list(features, *, doc) -> List[Dict[str, Any]]:
             pass
         entity_ref_helper.update_all()
         clear_selection_in_inventor_app(doc)
+        if app is not None:
+            try:
+                from inventor_utils.app import doevents
+                doevents(app)
+            except Exception:
+                pass
+        else:
+            pump_waiting_messages()
     features[-1].SetEndOfPart(False)
     return out
 

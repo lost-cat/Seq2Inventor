@@ -1,13 +1,10 @@
-
-
-
 import argparse
 import glob
 import os
 import json
 import tqdm
 
-from inventor_utils.app import get_all_features, get_inventor_application, open_inventor_document
+from inventor_utils.app import com_sta, get_all_features, get_inventor_application, open_inventor_document, set_inventor_silent
 
 
 if __name__ == "__main__":
@@ -35,32 +32,42 @@ if __name__ == "__main__":
         selected_files = all_part_files
     failed_files = []
     pb = tqdm.tqdm(selected_files, total=len(selected_files), desc="Processing parts")
-    app = get_inventor_application()
-    if app is None:
-        raise SystemExit("Inventor application not available.")
-    app.Visible = True
-    for part_file in pb:
-        abs_path = os.path.abspath(part_file)
-        part_doc = open_inventor_document(app, part_file)
-        if part_doc is None:
-            print(f"Failed to open document: {part_file}")
-            continue
-        features = get_all_features(part_doc)
-        json_path = os.path.join(out_dir, os.path.basename(part_file).replace(".ipt", "_features.json"))
-        from feature_wrappers import dump_features_as_json, wrap_feature
+    with com_sta():
+        app = get_inventor_application()
+
+        if app is None:
+            raise SystemExit("Inventor application not available.")
+        app.Visible = True
+        set_inventor_silent(app, True)
         try:
-            if len(features) >=50:
-                failed_files.append({part_file: "Too many features, skip"})
-                continue
-            dump_features_as_json(features, path=json_path, doc=part_doc)
-        except Exception as e:
-            print(f"Failed to dump features for {part_file}: {e}")
-            failed_files.append({part_file: str(e)})
-        #close document
-        try:
-            part_doc.Close(True)
-        except Exception as e:
-            print(f"Failed to close document {part_file}: {e}")
+            for part_file in pb:
+                abs_path = os.path.abspath(part_file)
+                part_doc = open_inventor_document(app, part_file)
+                if part_doc is None:
+                    print(f"Failed to open document: {part_file}")
+                    continue
+                features = get_all_features(part_doc)
+                json_path = os.path.join(out_dir, os.path.basename(part_file).replace(".ipt", "_features.json"))
+                from feature_wrappers import dump_features_as_json, wrap_feature
+                try:
+                    if len(features) >=50:
+                        failed_files.append({part_file: "Too many features, skip"})
+                        part_doc.Close(True)
+                        continue
+                    dump_features_as_json(features, path=json_path, doc=part_doc)
+                except Exception as e:
+                    print(f"Failed to dump features for {part_file}: {e}")
+                    failed_files.append({part_file: str(e)})
+                #close document
+                try:
+                    part_doc.Close(True)
+                except Exception as e:
+                    print(f"Failed to close document {part_file}: {e}")
+        finally:
+            set_inventor_silent(app, False)
+            app = None
+            import gc
+            gc.collect()
     # 保存失败文件列表
     failed_reason_json = os.path.join(out_dir, "failed_files.json")
     if not os.path.exists(failed_reason_json):

@@ -9,8 +9,8 @@ from .utils import (_emit,
 from .geometry import (
     Point2D,
     Point3D,
-    PlaneEntity,
-    AxisEntity,
+    AxisEntityWrapper,
+    PlaneEntityWrapper,
     SketchPoint,
     Parameter,
     Curve2d,
@@ -99,9 +99,8 @@ from .enums import (
     map_values_to_names,
 )
 
-# Back-compat exported aliases
-SketchPlane = PlaneEntity
-RevolveAxis = AxisEntity
+
+
 
 
 __all__ = [
@@ -113,10 +112,8 @@ __all__ = [
     # geometry
     "Point2D",
     "Point3D",
-    "PlaneEntity",
-    "AxisEntity",
-    "SketchPlane",
-    "RevolveAxis",
+    "AxisEntityWrapper",
+    'PlaneEntityWrapper',
     "SketchPoint",
     "Parameter",
     "Curve2d",

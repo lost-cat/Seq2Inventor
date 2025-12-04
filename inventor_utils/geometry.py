@@ -1,5 +1,7 @@
 
 
+from traitlets import Any
+from inventor_utils.enums import is_type_of
 from inventor_utils.transient import transient_point_3d, transient_unit_vector_3d
 
 from .utils import _emit
@@ -50,11 +52,37 @@ class Point3D:
     def to_tuple(self):
         return (self.x, self.y, self.z)
 
+class Plane:
+    origin: Point3D
+    normal: Point3D
 
-class PlaneEntity:
+    def __init__(self, plane):
+        self.plane = plane
+        self.origin = Point3D.from_inventor(plane.RootPoint)
+        self.normal = Point3D.from_inventor(plane.Normal)
+    @classmethod
+    def from_origin_normal(cls, origin, normal):
+        instance = cls.__new__(cls)
+        instance.plane = None
+        instance.origin = origin if isinstance(origin, Point3D) else Point3D.from_inventor(origin)
+        n = normal if isinstance(normal, Point3D) else Point3D.from_inventor(normal)
+        instance.normal = n.unit()
+        return instance
+
+class PlaneEntityWrapper:
+    origin: Point3D
+    normal: Point3D
+    axis_x: Point3D
+    axis_y: Point3D
+    
     def __init__(self, sketch, entity_index_helper):
+        if not is_type_of(sketch, "PlanarSketch"):
+            return
         self.plane = sketch.PlanarEntityGeometry
-        self.plane_entity = sketch.PlanarEntity
+        if hasattr(sketch, "PlanarEntity"):
+            self.plane_entity = sketch.PlanarEntity
+        else:
+            self.plane_entity = None
         self.origin = Point3D.from_inventor(sketch.OriginPointGeometry)
         self.normal = Point3D.from_inventor(self.plane.Normal)
         if sketch.AxisIsX:
@@ -67,7 +95,6 @@ class PlaneEntity:
             self.axis_x = Point3D.from_inventor(
                 sketch.AxisEntityGeometry.Direction.CrossProduct(self.plane.Normal)
             )
-        self.entity_index_helper = entity_index_helper
         if self.plane_entity is None:
             try:
                 # Local import to avoid circular dependency
@@ -86,7 +113,7 @@ class PlaneEntity:
             f"axis_x={self.axis_x}, axis_y={self.axis_y})"
         )
     @classmethod
-    def  from_work_plane(cls, work_plane, entity_index_helper):
+    def  from_work_plane(cls, work_plane, entity_index_helper = None):
         instance = cls.__new__(cls)
         app = work_plane.Application
         origin,axis_x,axis_y =  work_plane.GetPosition(transient_point_3d(app,0,0,0), transient_unit_vector_3d(app,0,0,0), transient_unit_vector_3d(app,0,0,0))
@@ -96,23 +123,14 @@ class PlaneEntity:
         instance.normal = Point3D.from_inventor(instance.plane.Normal)
         instance.axis_x = Point3D.from_inventor(axis_x)
         instance.axis_y = Point3D.from_inventor(axis_y)
-        instance.entity_index_helper = entity_index_helper
+        # instance.entity_index_helper = entity_index_helper
         return instance
 
-    def to_dict(self):
-        return {
-            "geometry": {
-                "origin": self.origin,
-                "normal": self.normal,
-                "axis_x": self.axis_x,
-                "axis_y": self.axis_y,
-            },
-            "index": self.plane_entity_ref if hasattr(self, "plane_entity_ref") else None,
-        }
+
     
     @classmethod
-    def from_dict(cls, d: dict, entity_index_helper) -> "PlaneEntity":
-        instance = PlaneEntity.__new__(PlaneEntity)
+    def from_dict(cls, d: dict, entity_index_helper) -> "PlaneEntityWrapper":
+        instance = PlaneEntityWrapper.__new__(PlaneEntityWrapper)
         geom = d.get("geometry", {})
         origin = geom.get("origin", {})
         normal = geom.get("normal", {})
@@ -124,59 +142,88 @@ class PlaneEntity:
         instance.axis_y = Point3D(axis_y.get("x",0), axis_y.get("y",0), axis_y.get("z",0))
         instance.plane = None
         instance.plane_entity = None
-        instance.entity_index_helper = entity_index_helper
+        # instance.entity_index_helper = entity_index_helper
         index  = d.get("index")
         if index is not None:
             instance.plane_entity_ref = index
         return instance
+    
+    def to_dict(self):
+        return {
+            "geometry": {
+                "origin": self.origin,
+                "normal": self.normal,
+                "axis_x": self.axis_x,
+                "axis_y": self.axis_y,
+            },
+            "index": self.plane_entity_ref if hasattr(self, "plane_entity_ref") else None,
+            "metaType": "PlaneEntity",
+        }
+    
+    def to_work_plane(self, com_def):
+        from .features import add_work_plane
+        wp = add_work_plane(
+            com_def,origin=self.origin.to_tuple(), x_axis=self.axis_x.to_tuple(), y_axis=self.axis_y.to_tuple()
+        )
+        return wp
 
 
-class AxisEntity:
+class AxisEntityWrapper:
+    start_point: Point3D
+    direction: Point3D
+    axis_entity_meta: dict
     def __init__(self, axis_entity, entity_index_helper):
-        self.axis_entity = axis_entity
         self.entity_index_helper = entity_index_helper
-
-    @property
-    def geometry(self):
-        if hasattr(self.axis_entity, "Geometry3d"):
-            return self.axis_entity.Geometry3d
-        elif hasattr(self.axis_entity, "Line"):
-            return self.axis_entity.Line
+        if is_type_of(axis_entity, "WorkAxis"):
+            self.start_point = Point3D.from_inventor(axis_entity.Line.RootPoint)
+            self.direction = Point3D.from_inventor(axis_entity.Line.Direction).unit()
+        elif is_type_of(axis_entity, "SketchLine"):
+            self.start_point = Point3D.from_inventor(axis_entity.Geometry3d.StartPoint)
+            self.direction = Point3D.from_inventor(axis_entity.Geometry3d.Direction).unit()
         else:
-            raise ValueError("Unknown axis entity type")
+            raise TypeError("Unsupported axis_entity type")
+        self.axis_entity = axis_entity
+        if self.axis_entity is not None and   is_type_of(self.axis_entity, "Edge"):
 
-    @property
-    def start_point(self):
-        if hasattr(self.geometry, "StartPoint"):
-            return Point3D.from_inventor(self.geometry.StartPoint)
-        elif hasattr(self.geometry, "RootPoint"):
-            return Point3D.from_inventor(self.geometry.RootPoint)
+            try:
+                # Local import to avoid circular dependency
+                from .metadata import collect_edge_metadata
+                self.axis_entity_meta =  collect_edge_metadata(self.axis_entity)
+            except Exception:
+                self.axis_entity_meta = {}
+                print("Warning: Unable to collect metadata for axis entity.")
         else:
-            raise ValueError("Unknown geometry type for start point")
+            self.axis_entity_meta = {}
 
-    @property
-    def direction(self):
-        dir = Point3D.from_inventor(self.geometry.Direction)
-        return dir.unit()
+
+
 
     def __repr__(self):
         return f"RevolveAxis(start_point={self.start_point}, direction={self.direction})"
 
-    def axis_entity_ref(self):
-        try:
-            # Local import to avoid circular dependency
-            from .metadata import collect_edge_metadata
-
-            return collect_edge_metadata(self.axis_entity)
-        except Exception:
-            return None
-
+    @classmethod
+    def from_dict(cls, d: dict, entity_index_helper) -> "AxisEntityWrapper":
+        instance = AxisEntityWrapper.__new__(AxisEntityWrapper)
+        start_point = d.get("start_point", {})
+        direction = d.get("direction", {})
+        instance.start_point = Point3D(start_point.get("x",0), start_point.get("y",0), start_point.get("z",0))
+        instance.direction = Point3D(direction.get("x",0), direction.get("y",0), direction.get("z",0))
+        # instance.axis_entity = entity_index_helper.select_entity_by_metadata(d.get("index"))
+        instance.axis_entity_meta = d.get("index", {})
+        instance.axis_entity = None # temporal set to None
+        return instance
     def to_dict(self):
         return {
+            'metaType':'AxisEntity',
             "start_point": {"x": self.start_point.x, "y": self.start_point.y, "z": self.start_point.z},
             "direction": {"x": self.direction.x, "y": self.direction.y, "z": self.direction.z},
-            "index": self.axis_entity_ref(),
+            "index": self.axis_entity_meta,
         }
+    def to_work_axis(self, com_def):
+        from .features import add_work_axe
+        wp = add_work_axe(com_def,origin=self.start_point.to_tuple(), axis=self.direction.to_tuple()
+        )
+        return wp
 
 
 class SketchPoint:
@@ -322,6 +369,35 @@ class CircleCurve2d(Curve2d):
         c = self.center
         _emit(f"{prefix}CircleCurve2d: Center=({c.x:.3f}, {c.y:.3f}) Radius={self.radius:.3f}", out=out)
 
-    # Backward-compatible aliases expected by external imports
-    SketchPlane = PlaneEntity
-    RevolveAxis = AxisEntity
+
+class BSplineCurve2d(Curve2d):
+    def __init__(self, spline_curve2d):
+        super().__init__(spline_curve2d)
+        self._spline_curve2d = spline_curve2d
+
+    def get_bspline_data(self):
+        # Poles Double Input/output Double that specifies the poles of the B-Spline. 
+        # Knots Double Input/output Double that specifies the knots of the B-Spline. 
+        # Weights Double Input/output Double that specifies the B-spline's weights.
+        poles,knots,weights =  self._spline_curve2d.GetBSplineData([], [], [])
+        order, num_poles,num_knots, is_rational, is_periodic, is_closed  = self._spline_curve2d.GetBSplineInfo(0,0,0,False,False,False)
+        return {
+            'poles': poles,
+            'knots': knots,
+            'weights': weights,
+            'order': order,
+            'num_poles': num_poles,
+            'num_knots': num_knots,
+            'is_rational': is_rational,
+            'is_periodic': is_periodic,
+            'is_closed': is_closed,
+        }
+
+
+
+    def __repr__(self):
+        return f"SplineCurve2d()"
+
+    def pretty_print(self, prefix: str = "", out=None):
+        super().pretty_print(prefix, out=out)
+        _emit(f"{prefix}SplineCurve2d", out=out)
