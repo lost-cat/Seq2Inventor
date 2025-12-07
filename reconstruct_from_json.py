@@ -387,7 +387,7 @@ def _rebuild_chamfer(
     out_feature = None
     if chamfer_type == "kDistance":
         distance1 = feat.get("distance")
-    elif chamfer_type == "kTwoDistance":
+    elif chamfer_type == "kTwoDistances":
         distance1 = feat.get("distanceOne")
         distance2 = feat.get("distanceTwo")
     elif chamfer_type == "kDistanceAndAngle":
@@ -400,7 +400,7 @@ def _rebuild_chamfer(
         out_feature = com_def.Features.ChamferFeatures.AddUsingDistance(
             edge_collection, distance1["expression"]
         )
-    elif chamfer_type == "kTwoDistance":
+    elif chamfer_type == "kTwoDistances":
         if distance2 is None:
             print(
                 "[rebuild] Chamfer missing distance2 for two-distance type; skipping chamfer"
