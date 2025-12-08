@@ -8,8 +8,8 @@
       "type": "DistanceExtent",
       "distance": {
         "name": "d0",
-        "value": 2.0,
-        "expression": "20 mm",
+        "value": 3.0,
+        "expression": "30 mm",
         "valueType": "kNominalValue"
       },
       "direction": "kPositiveExtentDirection"
@@ -17,7 +17,7 @@
     "extentType": "kDistanceExtent",
     "isTwoDirectional": false,
     "profile": {
-      "ReferenceKey": "EAIAABAAAABnAQAAAAAAAIAAAAAAAAAA",
+      "ReferenceKey": "EAIAABAAAADDAwAAAAAAAIAAAAAAAAAA",
       "sketchName": "草图1",
       "SketchPlane": {
         "geometry": {
@@ -47,13 +47,13 @@
       },
       "ProfilePaths": [
         {
-          "ReferenceKey": "EAIAABAAAABsAQAAAAAAAIAAAAAAAAAA",
+          "ReferenceKey": "EAIAABAAAADEAwAAAAAAAIAAAAAAAAAA",
           "Closed": true,
           "IsTextBoxPath": false,
           "EntityCount": 4,
           "PathEntities": [
             {
-              "ReferenceKey": "EAIAABAAAABoAQAAAAAAAIAAAAAAAAAA",
+              "ReferenceKey": "EAIAABAAAADFAwAAAAAAAIAAAAAAAAAA",
               "CurveType": "kLineSegmentCurve2d",
               "StartSketchPoint": {
                 "x": -2.868113003135246,
@@ -80,7 +80,7 @@
               }
             },
             {
-              "ReferenceKey": "EAIAABAAAABpAQAAAAAAAIAAAAAAAAAA",
+              "ReferenceKey": "EAIAABAAAADGAwAAAAAAAIAAAAAAAAAA",
               "CurveType": "kLineSegmentCurve2d",
               "StartSketchPoint": {
                 "x": 6.373584451411654,
@@ -107,7 +107,7 @@
               }
             },
             {
-              "ReferenceKey": "EAIAABAAAABqAQAAAAAAAIAAAAAAAAAA",
+              "ReferenceKey": "EAIAABAAAADHAwAAAAAAAIAAAAAAAAAA",
               "CurveType": "kLineSegmentCurve2d",
               "StartSketchPoint": {
                 "x": 6.373584451411654,
@@ -134,7 +134,7 @@
               }
             },
             {
-              "ReferenceKey": "EAIAABAAAABrAQAAAAAAAIAAAAAAAAAA",
+              "ReferenceKey": "EAIAABAAAADIAwAAAAAAAIAAAAAAAAAA",
               "CurveType": "kLineSegmentCurve2d",
               "StartSketchPoint": {
                 "x": -3.186792225705829,
@@ -174,7 +174,7 @@
       "metaType": "AxisEntity",
       "start_point": {
         "x": 2.7698745890200627,
-        "y": 2.0,
+        "y": 3.0,
         "z": -1.5248298995045508
       },
       "direction": {
@@ -196,7 +196,7 @@
         "geometry": {
           "origin": {
             "x": 0.0,
-            "y": 2.0,
+            "y": 3.0,
             "z": 0.0
           },
           "normal": {
@@ -215,7 +215,43 @@
             "z": -1.0
           }
         },
-        "index": null,
+        "index": {
+          "metaType": "Face",
+          "surfaceType": "kPlaneSurface",
+          "area": 104.429,
+          "centroid": [
+            -1.593,
+            3.0,
+            0.341
+          ],
+          "orientation": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "rangeBox": {
+            "minPoint": [
+              -6.374,
+              3.0,
+              -5.213
+            ],
+            "maxPoint": [
+              3.187,
+              3.0,
+              5.896
+            ]
+          },
+          "uvBox": {
+            "minPoint": [
+              -5.554,
+              -4.78
+            ],
+            "maxPoint": [
+              5.554,
+              4.78
+            ]
+          }
+        },
         "metaType": "PlaneEntity"
       },
       "ProfilePaths": [
@@ -339,193 +375,48 @@
     }
   },
   {
-    "ReferenceKey": "EAIAABAAAACIAwAAAAAAAIAAAAAAAAAA",
-    "type": "ExtrudeFeature",
-    "name": "拉伸2",
-    "operation": "kJoinOperation",
-    "extent": {
-      "type": "DistanceExtent",
-      "distance": {
-        "name": "d3",
-        "value": 1.0,
-        "expression": "10 mm",
-        "valueType": "kNominalValue"
-      },
-      "direction": "kPositiveExtentDirection"
-    },
-    "extentType": "kDistanceExtent",
-    "isTwoDirectional": false,
-    "profile": {
-      "ReferenceKey": "EAIAABAAAAB/AwAAAAAAAIAAAAAAAAAA",
-      "sketchName": "草图3",
-      "SketchPlane": {
-        "geometry": {
-          "origin": {
-            "x": 0.0,
-            "y": 2.0,
-            "z": 0.0
-          },
-          "normal": {
-            "x": 0.0,
-            "y": 1.0,
-            "z": 0.0
-          },
-          "axis_x": {
-            "x": 1.0,
-            "y": 0.0,
-            "z": 0.0
-          },
-          "axis_y": {
-            "x": 0.0,
-            "y": 0.0,
-            "z": -1.0
-          }
+    "ReferenceKey": "EAIAABAAAAAaAwAAAAAAAIAAAAAAAAAA",
+    "type": "FilletFeature",
+    "name": "圆角1",
+    "featureType": "FilletFeature",
+    "filletType": "kEdgeFillet",
+    "edgeSets": [
+      {
+        "radius": {
+          "name": "d3",
+          "value": 0.2,
+          "expression": "2 mm",
+          "valueType": "kNominalValue"
         },
-        "index": null,
-        "metaType": "PlaneEntity"
-      },
-      "ProfilePaths": [
-        {
-          "ReferenceKey": "EAIAABAAAACEAwAAAAAAAIAAAAAAAAAA",
-          "Closed": true,
-          "IsTextBoxPath": false,
-          "EntityCount": 4,
-          "PathEntities": [
-            {
-              "ReferenceKey": "EAIAABAAAACAAwAAAAAAAIAAAAAAAAAA",
-              "CurveType": "kLineSegmentCurve2d",
-              "StartSketchPoint": {
-                "x": -0.5612603051951847,
-                "y": 0.3860848407286557
-              },
-              "EndSketchPoint": {
-                "x": -2.5568525014447303,
-                "y": 1.1136117152526785
-              },
-              "Curve": {
-                "type": "LineSegment2d",
-                "start": {
-                  "x": -0.5612603051951847,
-                  "y": 0.3860848407286557
-                },
-                "end": {
-                  "x": -2.5568525014447303,
-                  "y": 1.1136117152526785
-                },
-                "direction": {
-                  "x": -0.9395123230376594,
-                  "y": 0.34251510165302296
-                }
-              }
-            },
-            {
-              "ReferenceKey": "EAIAABAAAACBAwAAAAAAAIAAAAAAAAAA",
-              "CurveType": "kBSplineCurve2d",
-              "StartSketchPoint": {
-                "x": -2.5568525014447303,
-                "y": 1.1136117152526785
-              },
-              "EndSketchPoint": {
-                "x": -5.8531431827497835,
-                "y": -1.8619587879024786
-              },
-              "Curve": {
-                "type": "BSplineCurve2d",
-                "bSplineData": {
-                  "poles": [
-                    -2.5568525014447303,
-                    1.1136117152526785,
-                    -2.4499457766456474,
-                    -0.3414420337953672,
-                    -2.9844794006410615,
-                    -1.8619587879024786,
-                    -4.017911073698862,
-                    -0.8819804784801215,
-                    -5.318609558754369,
-                    0.9710694157003358,
-                    -5.8531431827497835,
-                    -1.8619587879024786
-                  ],
-                  "knots": [
-                    1.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    2.0,
-                    3.0,
-                    3.0,
-                    3.0,
-                    3.0,
-                    3.0
-                  ],
-                  "weights": null,
-                  "order": 5,
-                  "num_poles": 6,
-                  "num_knots": 11,
-                  "is_rational": false,
-                  "is_periodic": false,
-                  "is_closed": false
-                }
-              }
-            },
-            {
-              "ReferenceKey": "EAIAABAAAACCAwAAAAAAAIAAAAAAAAAA",
-              "CurveType": "kLineSegmentCurve2d",
-              "StartSketchPoint": {
-                "x": -5.8531431827497835,
-                "y": -1.8619587879024786
-              },
-              "EndSketchPoint": {
-                "x": -2.8775726758419786,
-                "y": -4.409902392400607
-              },
-              "Curve": {
-                "type": "LineSegment2d",
-                "start": {
-                  "x": -5.8531431827497835,
-                  "y": -1.8619587879024786
-                },
-                "end": {
-                  "x": -2.8775726758419786,
-                  "y": -4.409902392400607
-                },
-                "direction": {
-                  "x": 0.7595775716943266,
-                  "y": -0.6504167222473223
-                }
-              }
-            },
-            {
-              "ReferenceKey": "EAIAABAAAACDAwAAAAAAAIAAAAAAAAAA",
-              "CurveType": "kLineSegmentCurve2d",
-              "StartSketchPoint": {
-                "x": -2.8775726758419786,
-                "y": -4.409902392400607
-              },
-              "EndSketchPoint": {
-                "x": -0.5612603051951847,
-                "y": 0.3860848407286557
-              },
-              "Curve": {
-                "type": "LineSegment2d",
-                "start": {
-                  "x": -2.8775726758419786,
-                  "y": -4.409902392400607
-                },
-                "end": {
-                  "x": -0.5612603051951846,
-                  "y": 0.3860848407286559
-                },
-                "direction": {
-                  "x": 0.43490257567692336,
-                  "y": 0.9004775120288003
-                }
-              }
-            }
-          ]
-        }
-      ]
-    }
+        "edges": [
+          {
+            "metaType": "Edge",
+            "geometryType": "kLineSegmentCurve",
+            "length": 9.560376677117484,
+            "midpoint": [
+              -1.593,
+              3.0,
+              5.896
+            ],
+            "adjacentFaceTypes": [
+              "kPlaneSurface",
+              "kPlaneSurface"
+            ],
+            "endpoints": [
+              [
+                -6.374,
+                3.0,
+                5.896
+              ],
+              [
+                3.187,
+                3.0,
+                5.896
+              ]
+            ]
+          }
+        ]
+      }
+    ]
   }
 ]

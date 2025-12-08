@@ -21,14 +21,14 @@ from inventor_utils.app import (
 def main():
     with com_sta():
         app = get_inventor_application()
-        set_inventor_silent(app, True)
+        # set_inventor_silent(app, True)
         try:
             if app is None:
                 raise SystemExit("Inventor application not available.")
             app.Visible = True
             part_doc = open_inventor_document(
                 app,
-                r"E:\Python\PyProjects\Seq2Inventor\data\race-car-tubular-chassis\Formula\engine_left.ipt",
+                r"E:\Python\PyProjects\Seq2Inventor\test_inventor_1.ipt",
             )
             if part_doc is None:
                 print("Failed to open document.")
@@ -42,7 +42,7 @@ def main():
             # print_features(features, doc=part_doc)
             dump_features_as_json(
                 features,
-                path=r"E:\Python\PyProjects\Seq2Inventor\data\race-car-tubular-chassis\Formula_output\engine_left_features.json",
+                path=r"E:\Python\PyProjects\Seq2Inventor\test_inventor_1_features.json",
                 doc=part_doc,
             )
         finally:
