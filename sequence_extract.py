@@ -6,7 +6,6 @@ from inventor_utils.app import (
     com_sta,
     get_all_features,
     get_inventor_application,
-    init_com_apartment,
     open_inventor_document,
     set_inventor_silent,
 )

@@ -95,16 +95,18 @@ class PlaneEntityWrapper:
             self.axis_x = Point3D.from_inventor(
                 sketch.AxisEntityGeometry.Direction.CrossProduct(self.plane.Normal)
             )
-        if self.plane_entity is not None:
+        if self.plane_entity is not None and is_type_of(self.plane_entity, "Face"):
             try:
                 # Local import to avoid circular dependency
                 from .metadata import collect_face_metadata
-
                 self.plane_entity_meta =  collect_face_metadata(self.plane_entity)
-            except Exception:
+
+            except Exception as e:
                 self.plane_entity_meta = None
-                print("Warning: Unable to collect metadata for plane entity.")
-        
+                print(f"Warning: Unable to collect metadata for plane entity. Error: {e}")
+        else:
+            print("Skip plane entity metadata collection.because plane_entity is None or not a Face.")
+            self.plane_entity_meta = None
         pass
 
     def __repr__(self):
@@ -189,9 +191,9 @@ class AxisEntityWrapper:
                 # Local import to avoid circular dependency
                 from .metadata import collect_edge_metadata
                 self.axis_entity_meta =  collect_edge_metadata(self.axis_entity)
-            except Exception:
+            except Exception as e:
                 self.axis_entity_meta = {}
-                print("Warning: Unable to collect metadata for axis entity.")
+                print(f"Warning: Unable to collect metadata for axis entity. Error: {e}")
         else:
             self.axis_entity_meta = {}
 
