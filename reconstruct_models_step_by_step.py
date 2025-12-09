@@ -12,7 +12,6 @@ If output_root omitted, defaults beside the JSON file.
 from __future__ import annotations
 import argparse
 import os
-import sys
 import json
 from typing import Any, Dict, List, Optional, Tuple
 
