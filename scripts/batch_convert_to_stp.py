@@ -22,6 +22,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Batch convert Inventor parts to STEP format.")
     parser.add_argument("--ipt_dir", help="One or more directories containing .ipt files (flag form).")
     parser.add_argument("--output_dir", default=".", help="Directory to save converted STEP files.")
+    parser.add_argument("--start", type=int, default=0, help="Index to start processing from.")
     args = parser.parse_args()
     ipt_dirs = []
     if args.ipt_dir:
@@ -34,6 +35,11 @@ if __name__ == "__main__":
     for d in ipt_dirs:
         ipt_files.extend(glob.glob(os.path.join(d, "**", "*.ipt"), recursive=True))
     print(f"Found {len(ipt_files)} .ipt files to convert.")
+    ipt_files = sorted(ipt_files)
+
+    print(f"Processing {len(ipt_files)} files starting from index {args.start}.")
+    if args.start > 0:
+        ipt_files = ipt_files[args.start:]
     pbar = tqdm.tqdm(ipt_files)
     with com_sta():
         app = get_inventor_application()
