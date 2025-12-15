@@ -141,3 +141,33 @@ class Padder:
             x[i, :t] = b["x"]
         attn_mask = torch.arange(T).unsqueeze(0) < lengths.unsqueeze(1)
         return {"x": x, "lengths": lengths, "attn_mask": attn_mask}
+
+
+class StepByStepDataset(Dataset):
+
+    def __init__(
+        self,  json_dir: str | os.PathLike, step_brep_dir: str | os.PathLike):
+        super().__init__()
+        self.all_json_paths = self._collect_json_files(json_dir)
+        self.step_brep_dir = str(step_brep_dir)
+    
+    def __len__(self) -> int:
+        
+        return len(self.all_json_paths)
+    
+    def __getitem__(self, idx: int):
+        json_path = self.all_json_paths[idx]
+        base_name = os.path.basename(json_path)
+        name_no_ext, _ = os.path.splitext(base_name)
+        step_brep_path = os.path.join(self.step_brep_dir, name_no_ext)
+        return {
+            "json_path": json_path,
+            "step_brep_path": step_brep_path
+        }
+        
+    
+    def _collect_json_files(self, json_dir: str | os.PathLike) -> List[str]:
+        p = Path(json_dir)
+        files = [str(fp) for fp in p.glob("*.json")]
+        files.sort()
+        return files

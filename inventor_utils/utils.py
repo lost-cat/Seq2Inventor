@@ -1,6 +1,10 @@
+import os
 from typing import Optional, TextIO
 
 import numpy as np
+import win32com.client
+
+from inventor_utils.enums import _const, is_type_of
 
 
 
@@ -68,7 +72,46 @@ def filter_face_by_normal_and_centroid(faces, normal, centroid):
     return None
 
 
+def export_to_step(part, filepath: str):
+    if part is None:
+        raise ValueError("part is None")
 
+    part.Activate()
+    app = part.Parent
+    if app is None:
+        raise ValueError("part.Application is missing")
+
+    # Ensure output directory exists
+    out_dir = os.path.dirname(os.path.abspath(filepath)) or "."
+    os.makedirs(out_dir, exist_ok=True)
+
+    # STEP translator GUID from Inventor API docs
+    STEP_ADDIN_ID = "{90AF7F40-0C01-11D5-8E83-0010B541CD80}"
+    translator = app.ApplicationAddIns.ItemById(STEP_ADDIN_ID)
+    translator = win32com.client.CastTo(translator, "TranslatorAddIn")
+    if translator is None:
+        raise RuntimeError("STEP translator add-in not found")
+    if not translator.Activated:
+        translator.Activate()
+
+    trans_objs = app.TransientObjects
+    context = trans_objs.CreateTranslationContext()
+    #kFileBrowseIOMechanism
+    options = trans_objs.CreateNameValueMap()
+
+    if translator.HasSaveCopyAsOptions(part, context, options):
+        try:
+            protocol_type = options.Value("ApplicationProtocolType")
+            protocol_type = 3  # 3 = AP 214 - Automotive Design
+            
+            context.Type = _const("kFileBrowseIOMechanism")
+
+        except Exception:
+            pass
+
+    data_medium = trans_objs.CreateDataMedium()
+    data_medium.FileName = filepath
+    translator.SaveCopyAs(part, context, options, data_medium)
 
 def _json_default(obj):
     from inventor_utils.geometry import (
