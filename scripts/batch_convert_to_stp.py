@@ -1,23 +1,38 @@
 
 
+# Ensure repository root is on sys.path when running from scripts/
+import os
+import sys
+repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if repo_root not in sys.path:
+    sys.path.insert(0, repo_root)
 from inventor_utils.app import com_sta, open_inventor_document, set_inventor_silent
 
+import win32com.client
+from inventor_util import get_inventor_application
+from inventor_utils.utils import export_to_step
+import argparse
+import glob
+import tqdm
 
 if __name__ == "__main__":
-    import os
-    import win32com.client
-    from inventor_util import get_inventor_application
-    from inventor_utils.utils import export_to_step
-    import argparse
-    import glob
-    import tqdm
+
+
+
     parser = argparse.ArgumentParser(description="Batch convert Inventor parts to STEP format.")
-    parser.add_argument("ipt_dir", nargs='+', help="Directory containing .ipt files to convert.")
+    parser.add_argument("--ipt_dir", help="One or more directories containing .ipt files (flag form).")
     parser.add_argument("--output_dir", default=".", help="Directory to save converted STEP files.")
     args = parser.parse_args()
-    ipt_dir = args.ipt_dir
+    ipt_dirs = []
+    if args.ipt_dir:
+        ipt_dirs.append(args.ipt_dir)
+    if not ipt_dirs:
+        parser.error("Please provide at least one IPT directory (--ipt_dir)")
     output_dir = args.output_dir
-    ipt_files = glob.glob(os.path.join(ipt_dir,"**/*.ipt"), recursive=True)
+    # Gather all .ipt files from provided directories
+    ipt_files = []
+    for d in ipt_dirs:
+        ipt_files.extend(glob.glob(os.path.join(d, "**", "*.ipt"), recursive=True))
     print(f"Found {len(ipt_files)} .ipt files to convert.")
     pbar = tqdm.tqdm(ipt_files)
     with com_sta():
@@ -31,7 +46,14 @@ if __name__ == "__main__":
             if part_doc is None:
                 print(f"Failed to open document: {part_file}")
                 continue
-            rel_path = os.path.relpath(part_file, start=os.path.commonpath(ipt_dir))
+            # Compute relative path against the closest matching input dir
+            base_dir = None
+            for d in ipt_dirs:
+                if part_file.startswith(os.path.abspath(d)):
+                    base_dir = d
+                    break
+            base_dir = base_dir or ipt_dirs[0]
+            rel_path = os.path.relpath(part_file, start=os.path.abspath(base_dir))
             output_path = os.path.join(output_dir, os.path.splitext(rel_path)[0] + ".step")
             os.makedirs(os.path.dirname(output_path), exist_ok=True)
             try:
