@@ -418,5 +418,89 @@
         ]
       }
     ]
+  },
+  {
+    "ReferenceKey": "EAIAABAAAAAWBgAAAAAAAIAAAAAAAAAA",
+    "type": "ChamferFeature",
+    "name": "倒角1",
+    "featureType": "ChamferFeature",
+    "chamferType": "kDistanceAndAngle",
+    "distance": {
+      "name": "d4",
+      "value": 0.2,
+      "expression": "2 mm",
+      "valueType": "kNominalValue"
+    },
+    "angle": {
+      "name": "d6",
+      "value": 0.7853981633974483,
+      "expression": "45 deg",
+      "valueType": "kNominalValue"
+    },
+    "face": {
+      "metaType": "Face",
+      "surfaceType": "kPlaneSurface",
+      "area": 27.725,
+      "centroid": [
+        -1.753,
+        1.5,
+        -5.213
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "rangeBox": {
+        "minPoint": [
+          -6.374,
+          0.0,
+          -5.213
+        ],
+        "maxPoint": [
+          2.868,
+          3.0,
+          -5.213
+        ]
+      },
+      "uvBox": {
+        "minPoint": [
+          -0.0,
+          0.0
+        ],
+        "maxPoint": [
+          9.242,
+          3.0
+        ]
+      }
+    },
+    "edges": [
+      {
+        "metaType": "Edge",
+        "geometryType": "kLineSegmentCurve",
+        "length": 9.2416974545469,
+        "midpoint": [
+          -1.753,
+          3.0,
+          -5.213
+        ],
+        "adjacentFaceTypes": [
+          "kPlaneSurface",
+          "kPlaneSurface"
+        ],
+        "endpoints": [
+          [
+            -6.374,
+            3.0,
+            -5.213
+          ],
+          [
+            2.868,
+            3.0,
+            -5.213
+          ]
+        ]
+      }
+    ]
   }
 ]
