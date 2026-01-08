@@ -391,6 +391,6 @@ class FromToExtentWrapper(ExtentWrapper):
             },
             "entities": {
                 KEY["FROMFACE_ID"]: self.from_face,
-                KEY["TOFACE_ID"]: self.to_face,
+                KEY["TOFACE_ID"]: self.to_face, 
             },
         }

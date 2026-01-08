@@ -23,6 +23,7 @@ KEY = {
     "YX": 29,
     "YY": 30,
     "YZ": 31,
+    "REFER_PLANE_IDX": 32,
     # sketch entities
     "SPX": 40,
     "SPY": 41,
@@ -35,6 +36,7 @@ KEY = {
     "SW": 48,
     #DistanceExtentWrapper
     "DIST": 49,
+    #Selection
     "SELECT_ENTITY": 51,
     #face/edge metadata
     "AREA": 52,
@@ -61,13 +63,76 @@ KEY = {
     #FromToExtentWrapper
     "IS_EXTEND_FROM_FACE": 73,
     "FROMFACE_ID": 74,
-
     #Extrude specific
     "EXTENT_ONE": 100,
     "EXTENT_ONE_TYPE": 101,
     "EXTENT_TWO": 102,
     "EXTENT_TWO_TYPE": 103,
     "ISTWO_DIRECTIONAL": 104,
+    #Revolve specific
+    "AXIS_X": 120,
+    "AXIS_Y": 121,
+    "AXIS_Z": 122,
+    "AXIS_DIR_X": 123,
+    "AXIS_DIR_Y": 124,
+    "AXIS_DIR_Z": 125,
+    #Fillet specific
+    "RADIUS": 140,
+    "FILLET_EDGE_IDX": 141,
+    #Chamfer specific
+    "CHAMFER_TYPE": 160,
+    "CHAMFER_DIST_A": 161,
+    "CHAMFER_DIST_B": 162,
+    "CHAMFER_ANGLE": 163,
+    "CHAMFER_FACE_IDX": 164,
+    "CHAMFER_EDGE_IDX": 165,
+    #Hole specific
+    "DIAMETER": 180,
+    "DEPTH": 181,
+    "IS_FLAT_BOTTOM": 182,
+    "BOTTOM_TIP_ANGLE": 183,
+    "HOLE_EXTENT": 184,
+    #Shell specific
+    "SHELL_THICKNESS": 200,
+    "SHELL_DIRECTION": 201,
+    "SHELL_FACE_IDX": 202,
+    #Mirror specific
+    "IS_MIRROR_BODY": 220,
+    "MIRROR_FEATURE_IDX": 221,
+    "MIRROR_PLANE_OX": 222,
+    "MIRROR_PLANE_OY": 223,
+    "MIRROR_PLANE_OZ": 224,
+    "MIRROR_PLANE_NX": 225,
+    "MIRROR_PLANE_NY": 226,
+    "MIRROR_PLANE_NZ": 227,
+    "REMOVE_ORIGINAL": 228,
+    #RectangularPattern specific
+    "RECT_PATTERN_X_COUNT": 240,
+    "RECT_PATTERN_X_SPACING": 241,
+    "RECT_IS_PATTERN_BODY": 242,
+    "RECT_IS_NARTURE_X_DIR": 243,
+    "RECT_X_SPACING_TYPE": 244,
+    "RECT_DIR_X": 248,
+    "RECT_DIR_Y": 249,
+    "RECT_DIR_Z": 250,
+    "RECT_FEATURE_IDX": 251,
+    "RECT_PATTERN_SPACING_TYPE": 252,
+    #CircularPattern specific
+    "CIRC_IS_PATTERN_BODY": 260,
+    "CIRC_COUNT": 261,
+    "CIRC_ANGLE": 262,
+    "CIRC_NATURAL_DIR": 263,
+    "CIRC_AXIS_DIR_X": 264,
+    "CIRC_AXIS_DIR_Y": 265,
+    "CIRC_AXIS_DIR_Z": 266,
+    "CIRC_AXIS_OX": 267,
+    "CIRC_AXIS_OY": 268,
+    "CIRC_AXIS_OZ": 269,
+    
+
+
+
+
 
 }
 
@@ -106,14 +171,19 @@ TYPE_ID = {
     "Line": 2,
     "Arc": 3,
     "Circle": 4,
-    "SketchEnd": 5,
+    "Point": 5,
+    "SketchEnd": 9,
     "Extrude": 10,
     "Revolve": 11,
     "Chamfer": 12,
     "Fillet": 13,
     "Hole": 14,
-    "Selection": 15,
-    "Extent": 16,
+    "Shell": 15,
+    "Mirror": 16,
+    "RectPattern": 17,
+    "CircularPattern": 18,
+    "Selection": 19,
+    "Extent": 20,
 }
 
 OP_ID = {
@@ -136,4 +206,16 @@ EXTENT_ID = {
     "kFullSweepExtent": 4,
     "kThroughAllExtent": 5,
     "kFromToExtent": 6,
+}
+
+CHAMFER_TYPE_ID = {
+    "kTwoDistances": 0,
+    "kDistanceAndAngle": 1,
+    "kDistance" : 2,
+}
+
+PATTERN_SPACING_TYPE_ID = {
+    "kDefault": 0,
+    "kFitted":1,
+    "kFitToPathLength":2,
 }

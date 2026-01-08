@@ -41,6 +41,43 @@
             "request": "launch",
             "program": "${cwd}/reconstruct_models_step_by_step.py",
             "args": "--source E:\\Python\\PyProjects\\Seq2Inventor\\data\\race-car-tubular-chassis\\output --output_root E:\\Python\\PyProjects\\Seq2Inventor\\data\\race-car-tubular-chassis\\Formula_step_by_step --start 0"
+        },
+        {
+            "name": "json2vec",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${cwd}/json2vec.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--in", "${input:json2vecInput}",
+                "--out", "${input:json2vecOutput}",
+                "${input:json2vecPretty}"
+            ]
+        }
+    ],
+    
+    "inputs": [
+        {
+            "id": "json2vecInput",
+            "type": "promptString",
+            "description": "Input features JSON file path",
+            "default": "${workspaceFolder}/test_inventor_1_features.json"
+        },
+        {
+            "id": "json2vecOutput",
+            "type": "promptString",
+            "description": "Output vector JSON file path",
+            "default": "${workspaceFolder}/test_inventor_1_vec.json"
+        },
+        {
+            "id": "json2vecPretty",
+            "type": "pickString",
+            "description": "Pretty-print output?",
+            "options": [
+                "--pretty",
+                ""
+            ],
+            "default": "--pretty"
         }
     ]
 }

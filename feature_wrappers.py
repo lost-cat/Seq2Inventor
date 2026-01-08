@@ -294,7 +294,8 @@ class ExtrudeFeatureWrapper(BaseFeatureWrapper):
         self, i_object, entity_index_helper: Optional[EntityIndexHelper] = None
     ) -> None:
         super().__init__(i_object, entity_index_helper=entity_index_helper)
-        self.feature = CastTo(i_object, "ExtrudeFeature")
+        if self.feature is not None:
+            self.feature = CastTo(i_object, "ExtrudeFeature")
 
     def to_dict(self) -> Dict[str, Any]:
         super().to_dict()
@@ -360,7 +361,8 @@ class RevolveFeatureWrapper(BaseFeatureWrapper):
         self, i_object, entity_index_helper: Optional[EntityIndexHelper] = None
     ) -> None:
         super().__init__(i_object, entity_index_helper=entity_index_helper)
-        self.feature = CastTo(i_object, "RevolveFeature")
+        if self.feature is not None:
+            self.feature = CastTo(i_object, "RevolveFeature")
 
     def to_dict(self) -> Dict[str, Any]:
 
@@ -439,7 +441,8 @@ class FilletFeatureWrapper(BaseFeatureWrapper):
     def __init__(self, i_object, entity_index_helper=None) -> None:
         super().__init__(i_object, entity_index_helper=entity_index_helper)
         self.friendly_type = "FilletFeature"
-        self.feature = CastTo(i_object, "FilletFeature")
+        if self.feature is not None:
+            self.feature = CastTo(i_object, "FilletFeature")
 
     def to_dict(self) -> Dict[str, Any]:
         super().to_dict()
@@ -465,7 +468,7 @@ class FilletFeatureWrapper(BaseFeatureWrapper):
                                 edges.append(collect_edge_metadata(edge))
                             except Exception as e:
                                 print(
-                                    f"Error processing edge in fillet {d['name']}: {e}"
+                                    f"Error processing edge in fillet {self.data['name']}: {e}"
                                 )
                                 continue
                     self.data["edgeSets"].append({"radius": radius, "edges": edges})
@@ -475,7 +478,7 @@ class FilletFeatureWrapper(BaseFeatureWrapper):
             self.data["radius"] = val
         return self.data
 
-    def  edge_set_count(self) -> int:
+    def edge_set_count(self) -> int:
         if 'edgeSets' in self.data:
             return len(self.data['edgeSets'])
         return 0
@@ -488,13 +491,13 @@ class FilletFeatureWrapper(BaseFeatureWrapper):
     
 
 
-
 class ChamferFeatureWrapper(BaseFeatureWrapper):
     def __init__(
         self, i_object, entity_index_helper: Optional[EntityIndexHelper] = None
     ) -> None:
         super().__init__(i_object, entity_index_helper=entity_index_helper)
-        self.feature = CastTo(i_object, "ChamferFeature")
+        if self.feature is not None:
+            self.feature = CastTo(i_object, "ChamferFeature")
         self.friendly_type = "ChamferFeature"
 
     def to_dict(self) -> Dict[str, Any]:
@@ -521,7 +524,7 @@ class ChamferFeatureWrapper(BaseFeatureWrapper):
             pass
         else:
             raise NotImplementedError(
-                f"Chamfer type {d['chamferType']} not implemented in to_dict"
+                f"Chamfer type {self.data['chamferType']} not implemented in to_dict"
             )
         chamfered_edges = chamfer_def.ChamferedEdges
         for i in range(1, getattr(chamfered_edges, "Count", 0) + 1):
@@ -579,7 +582,8 @@ class ChamferFeatureWrapper(BaseFeatureWrapper):
 class HoleFeatureWrapper(BaseFeatureWrapper):
     def __init__(self, i_object, entity_index_helper=None) -> None:
         super().__init__(i_object, entity_index_helper=entity_index_helper)
-        self.feature = CastTo(i_object, "HoleFeature")
+        if self.feature is not None:
+            self.feature = CastTo(i_object, "HoleFeature")
         self.friendly_type = "HoleFeature"
 
     def to_dict(self) -> Dict[str, Any]:
@@ -636,13 +640,48 @@ class HoleFeatureWrapper(BaseFeatureWrapper):
         if 'extent' in self.data:
             return ExtentFactory.from_dict(self.data['extent'])
         return None
+    
+    def sketch_plane(self) -> Optional[PlaneEntityWrapper]:
+        if 'sketchPlane' in self.data:
+            return PlaneEntityWrapper.from_dict(self.data['sketchPlane'], self.entity_index_helper)
+        return None
+    
+    def hole_point_count(self) -> int:
+        if 'holeCenterPoints' in self.data:
+            return len(self.data['holeCenterPoints'])
+        return 0
+    def get_hole_point(self, index: int) -> Optional[Dict[str, Any]]:
+        if 'holeCenterPoints' in self.data:
+            if 0 <= index < len(self.data['holeCenterPoints']):
+                return self.data['holeCenterPoints'][index]
+        return None
+    
+    def hole_diameter(self) -> Optional[Parameter]:
+        if 'holeDiameter' in self.data:
+            return Parameter.from_dict(self.data['holeDiameter'])
+        return None
+    
+    def is_flat_bottomed(self) -> bool:
+        if 'isFlatBottomed' in self.data:
+            return self.data['isFlatBottomed']
+        return False
+    def bottom_tip_angle(self) -> Optional[Parameter]:
+        if 'bottomTipAngle' in self.data:
+            return Parameter.from_dict(self.data['bottomTipAngle'])
+        return None
+    
+    def depth(self) -> Optional[float]:
+        if 'depth' in self.data:
+            return self.data['depth']
+        return None
 
 
 @DeprecationWarning
 class ThreadFeatureWrapper(BaseFeatureWrapper):
     def __init__(self, i_object, entity_index_helper=None) -> None:
         super().__init__(i_object, entity_index_helper=entity_index_helper)
-        self.feature = CastTo(i_object, "ThreadFeature")
+        if self.feature is not None:
+            self.feature = CastTo(i_object, "ThreadFeature")
         self.friendly_type = "ThreadFeature"
 
     def to_dict(self) -> Dict[str, Any]:
@@ -658,7 +697,8 @@ class ShellFeatureWrapper(BaseFeatureWrapper):
         self, i_object, entity_index_helper: Optional[EntityIndexHelper] = None
     ) -> None:
         super().__init__(i_object, entity_index_helper=entity_index_helper)
-        self.feature = CastTo(i_object, "ShellFeature")
+        if self.feature is not None:
+            self.feature = CastTo(i_object, "ShellFeature")
         self.friendly_type = "ShellFeature"
 
     def to_dict(self) -> Dict[str, Any]:
@@ -704,7 +744,8 @@ class MirrorFeatureWrapper(BaseFeatureWrapper):
         self, i_object, entity_index_helper: Optional[EntityIndexHelper] = None
     ) -> None:
         super().__init__(i_object, entity_index_helper=entity_index_helper)
-        self.feature = CastTo(i_object, "MirrorFeature")
+        if self.feature is not None:
+            self.feature = CastTo(i_object, "MirrorFeature")
         self.friendly_type = "MirrorFeature"
 
     def to_dict(self) -> Dict[str, Any]:
@@ -772,7 +813,8 @@ class RectangularPatternFeatureWrapper(BaseFeatureWrapper):
         self, i_object, entity_index_helper: Optional[EntityIndexHelper] = None
     ) -> None:
         super().__init__(i_object, entity_index_helper=entity_index_helper)
-        self.feature = CastTo(i_object, "RectangularPatternFeature")
+        if self.feature is not None:
+            self.feature = CastTo(i_object, "RectangularPatternFeature")
         self.friendly_type = "RectangularPatternFeature"
 
     def to_dict(self) -> Dict[str, Any]:
@@ -834,7 +876,8 @@ class CircularPatternFeatureWrapper(BaseFeatureWrapper):
         self, i_object, entity_index_helper: Optional[EntityIndexHelper] = None
     ) -> None:
         super().__init__(i_object, entity_index_helper=entity_index_helper)
-        self.feature = CastTo(i_object, "CircularPatternFeature")
+        if self.feature is not None:
+            self.feature = CastTo(i_object, "CircularPatternFeature")
         self.friendly_type = "CircularPatternFeature"
 
     def to_dict(self) -> Dict[str, Any]:
@@ -894,7 +937,8 @@ class SweepFeatureWrapper(BaseFeatureWrapper):
         self, i_object, entity_index_helper: Optional[EntityIndexHelper] = None
     ) -> None:
         super().__init__(i_object, entity_index_helper=entity_index_helper)
-        self.feature = CastTo(i_object, "SweepFeature")
+        if self.feature is not None:
+            self.feature = CastTo(i_object, "SweepFeature")
         self.friendly_type = "SweepFeature"
 
     def to_dict(self) -> Dict[str, Any]:
