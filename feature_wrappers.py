@@ -317,6 +317,7 @@ class ExtrudeFeatureWrapper(BaseFeatureWrapper):
                 prof, entity_index_helper=self.entity_index_helper
             ).to_dict()
         return self.data
+    
 
     def operation(self) -> str:
         if 'operation' in self.data:
@@ -1019,6 +1020,8 @@ class FeatureWrapperFactory:
 
     @staticmethod
     def get_type_by_name(type_name: str) -> Type[BaseFeatureWrapper]:
+        if  not type_name.endswith("Feature"):
+            type_name += "Feature"
         feature_class: Type[BaseFeatureWrapper] = _WRAPPER_MAP.get(type_name, BaseFeatureWrapper)
         return feature_class
 

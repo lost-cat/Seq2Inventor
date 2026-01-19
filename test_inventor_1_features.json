@@ -552,5 +552,243 @@
         }
       }
     ]
+  },
+  {
+    "ReferenceKey": "EAIAABAAAABhBwAAAAAAAIAAAAAAAAAA",
+    "type": "HoleFeature",
+    "name": "孔1",
+    "holeType": "kDrilledHole",
+    "extentType": "kThroughAllExtent",
+    "extent": {
+      "type": "ThroughAllExtent",
+      "direction": "kPositiveExtentDirection"
+    },
+    "isFlatBottomed": true,
+    "sketchPlane": {
+      "geometry": {
+        "origin": {
+          "x": 0.0,
+          "y": 3.0,
+          "z": 0.0
+        },
+        "normal": {
+          "x": 0.0,
+          "y": 1.0,
+          "z": 0.0
+        },
+        "axis_x": {
+          "x": 1.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "axis_y": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": -1.0
+        }
+      },
+      "index": {
+        "metaType": "Face",
+        "surfaceType": "kPlaneSurface",
+        "area": 95.392,
+        "centroid": [
+          -1.596,
+          3.0,
+          0.341
+        ],
+        "orientation": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "axisInfo": null,
+        "planeInfo": {
+          "point": {
+            "x": -1.593,
+            "y": 3.0,
+            "z": 0.341
+          },
+          "normal": {
+            "x": 0.0,
+            "y": 1.0,
+            "z": 0.0
+          }
+        },
+        "rangeBox": {
+          "minPoint": [
+            -6.374,
+            3.0,
+            -5.013
+          ],
+          "maxPoint": [
+            3.181,
+            3.0,
+            5.696
+          ]
+        },
+        "uvBox": {
+          "minPoint": [
+            -5.354,
+            -4.78
+          ],
+          "maxPoint": [
+            5.354,
+            4.774
+          ]
+        }
+      },
+      "metaType": "PlaneEntity"
+    },
+    "placementType": "kSketchPlacementType",
+    "holeCenterPoints": [
+      {
+        "x": -2.421660918892437,
+        "y": -0.2571345093500472
+      }
+    ],
+    "isTapped": false,
+    "holeDiameter": {
+      "name": "d7",
+      "value": 2.0,
+      "expression": "20 mm",
+      "valueType": "kNominalValue"
+    },
+    "depth": 3.0
+  },
+  {
+    "ReferenceKey": "EAIAABAAAAAICAAAAAAAAIAAAAAAAAAA",
+    "type": "CircularPatternFeature",
+    "name": "环形阵列1",
+    "isPatternOfBody": false,
+    "angle": {
+      "name": "d15",
+      "value": 6.283185307179586,
+      "expression": "360 deg",
+      "valueType": "kNominalValue"
+    },
+    "count": {
+      "name": "d14",
+      "value": 4.0,
+      "expression": "4 ul",
+      "valueType": "kNominalValue"
+    },
+    "isNaturalAxisDirection": false,
+    "rotationAxis": {
+      "metaType": "Face",
+      "surfaceType": "kCylinderSurface",
+      "area": 18.85,
+      "centroid": [
+        -1.422,
+        1.5,
+        0.257
+      ],
+      "orientation": [
+        -1.0,
+        -0.0,
+        -0.0
+      ],
+      "axisInfo": {
+        "point": {
+          "x": -2.422,
+          "y": -11.96,
+          "z": 0.257
+        },
+        "direction": {
+          "x": 0.0,
+          "y": 1.0,
+          "z": 0.0
+        }
+      },
+      "planeInfo": null,
+      "rangeBox": {
+        "minPoint": [
+          -3.422,
+          0.0,
+          -0.743
+        ],
+        "maxPoint": [
+          -1.422,
+          3.0,
+          1.257
+        ]
+      },
+      "uvBox": {
+        "minPoint": [
+          -14.96,
+          -3.142
+        ],
+        "maxPoint": [
+          -11.96,
+          3.142
+        ]
+      }
+    },
+    "featuresToPattern": [
+      "旋转1"
+    ]
+  },
+  {
+    "ReferenceKey": "EAIAABAAAACWCAAAAAAAAIAAAAAAAAAA",
+    "type": "ShellFeature",
+    "name": "抽壳1",
+    "direction": "kInsideShellDirection",
+    "thickness": {
+      "name": "d17",
+      "value": 0.1,
+      "expression": "1 mm",
+      "valueType": "kNominalValue"
+    },
+    "inputFaces": [
+      {
+        "metaType": "Face",
+        "surfaceType": "kPlaneSurface",
+        "area": 101.287,
+        "centroid": [
+          -1.593,
+          0.0,
+          0.341
+        ],
+        "orientation": [
+          -0.0,
+          -1.0,
+          -0.0
+        ],
+        "axisInfo": null,
+        "planeInfo": {
+          "point": {
+            "x": -1.593,
+            "y": 0.0,
+            "z": 0.341
+          },
+          "normal": {
+            "x": 0.0,
+            "y": 1.0,
+            "z": 0.0
+          }
+        },
+        "rangeBox": {
+          "minPoint": [
+            -6.374,
+            0.0,
+            -5.213
+          ],
+          "maxPoint": [
+            3.187,
+            0.0,
+            5.896
+          ]
+        },
+        "uvBox": {
+          "minPoint": [
+            -5.554,
+            -4.78
+          ],
+          "maxPoint": [
+            5.554,
+            4.78
+          ]
+        }
+      }
+    ]
   }
 ]

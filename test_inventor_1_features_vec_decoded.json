@@ -1,0 +1,406 @@
+[
+  {
+    "type": "ExtrudeFeature",
+    "name": "Extrude_3",
+    "operation": "kNewBodyOperation",
+    "extentType": "kDistanceExtent",
+    "extent": {
+      "type": "DistanceExtent",
+      "distance": {
+        "name": "Distance",
+        "value": 3.0,
+        "value_type": "kUnitless"
+      },
+      "direction": "kPositiveExtentDirection"
+    },
+    "isTwoDirectional": false,
+    "profile": {
+      "SketchPlane": {
+        "geometry": {
+          "origin": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "normal": {
+            "x": 0.0,
+            "y": 1.0,
+            "z": 0.0
+          },
+          "axis_x": {
+            "x": -1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "axis_y": {
+            "x": 0.0,
+            "y": -0.0,
+            "z": 1.0
+          }
+        }
+      },
+      "ProfilePaths": [
+        {
+          "PathEntities": [
+            {
+              "CurveType": "kLineSegmentCurve2d",
+              "StartSketchPoint": {
+                "x": -2.868113003135246,
+                "y": -5.212681715942619
+              },
+              "EndSketchPoint": {
+                "x": 6.373584451411654,
+                "y": -5.212681715942619
+              }
+            },
+            {
+              "CurveType": "kLineSegmentCurve2d",
+              "StartSketchPoint": {
+                "x": 6.373584451411654,
+                "y": -5.212681715942619
+              },
+              "EndSketchPoint": {
+                "x": 6.373584451411654,
+                "y": 5.895565783533353
+              }
+            },
+            {
+              "CurveType": "kLineSegmentCurve2d",
+              "StartSketchPoint": {
+                "x": 6.373584451411654,
+                "y": 5.895565783533353
+              },
+              "EndSketchPoint": {
+                "x": -3.186792225705829,
+                "y": 5.895565783533353
+              }
+            },
+            {
+              "CurveType": "kLineSegmentCurve2d",
+              "StartSketchPoint": {
+                "x": -3.186792225705829,
+                "y": 5.895565783533353
+              },
+              "EndSketchPoint": {
+                "x": -2.868113003135246,
+                "y": -5.212681715942619
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "RevolveFeature",
+    "name": "Revolve_7",
+    "operation": "kCutOperation",
+    "extentType": "kFullSweepExtent",
+    "extent": {
+      "type": "FullSweepExtent"
+    },
+    "isTwoDirectional": false,
+    "axisEntity": {
+      "metaType": "AxisEntity",
+      "start_point": {
+        "x": 2.7698745890200627,
+        "y": 3.0,
+        "z": -1.5248298995045508
+      },
+      "direction": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 1.0
+      }
+    },
+    "profile": {
+      "SketchPlane": {
+        "geometry": {
+          "origin": {
+            "x": 0.0,
+            "y": 3.0,
+            "z": 0.0
+          },
+          "normal": {
+            "x": 0.0,
+            "y": 1.0,
+            "z": 0.0
+          },
+          "axis_x": {
+            "x": 1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "axis_y": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": -1.0
+          }
+        },
+        "index": {
+          "metaType": "Face",
+          "surfaceType": "kPlaneSurface",
+          "area": 104.429,
+          "centroid": [
+            -1.593,
+            3.0,
+            0.341
+          ],
+          "orientation": null
+        }
+      },
+      "ProfilePaths": [
+        {
+          "PathEntities": [
+            {
+              "CurveType": "kLineSegmentCurve2d",
+              "StartSketchPoint": {
+                "x": 2.7698745890200627,
+                "y": 1.5248298995045508
+              },
+              "EndSketchPoint": {
+                "x": 1.1471197792911372,
+                "y": 1.5248298995045508
+              }
+            },
+            {
+              "CurveType": "kLineSegmentCurve2d",
+              "StartSketchPoint": {
+                "x": 1.1471197792911372,
+                "y": 1.5248298995045508
+              },
+              "EndSketchPoint": {
+                "x": 1.1471197792911372,
+                "y": -1.3010016573754428
+              }
+            },
+            {
+              "CurveType": "kLineSegmentCurve2d",
+              "StartSketchPoint": {
+                "x": 1.1471197792911372,
+                "y": -1.3010016573754428
+              },
+              "EndSketchPoint": {
+                "x": 2.7698745890200627,
+                "y": -1.3010016573754428
+              }
+            },
+            {
+              "CurveType": "kLineSegmentCurve2d",
+              "StartSketchPoint": {
+                "x": 2.7698745890200627,
+                "y": -1.3010016573754428
+              },
+              "EndSketchPoint": {
+                "x": 2.7698745890200627,
+                "y": 1.5248298995045508
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "FilletFeature",
+    "name": "Fillet_9",
+    "edgeSets": [
+      {
+        "radius": {
+          "name": "Radius",
+          "value": 0.2,
+          "value_type": "kUnitless"
+        },
+        "edges": [
+          {
+            "metaType": "Edge",
+            "geometryType": "kLineSegmentCurve",
+            "length": 9.560376677117484,
+            "midpoint": [
+              -1.593,
+              3.0,
+              5.896
+            ],
+            "endpoints": [
+              [
+                -6.374,
+                3.0,
+                5.896
+              ],
+              [
+                3.187,
+                3.0,
+                5.896
+              ]
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "ChamferFeature",
+    "name": "Chamfer_12",
+    "chamferType": "kDistanceAndAngle",
+    "edges": [
+      {
+        "metaType": "Edge",
+        "geometryType": "kLineSegmentCurve",
+        "length": 9.2416974545469,
+        "midpoint": [
+          -1.753,
+          3.0,
+          -5.213
+        ],
+        "endpoints": [
+          [
+            -6.374,
+            3.0,
+            -5.213
+          ],
+          [
+            2.868,
+            3.0,
+            -5.213
+          ]
+        ]
+      }
+    ],
+    "distance": {
+      "name": "Distance",
+      "value": 0.2,
+      "value_type": "kUnitless"
+    },
+    "angle": {
+      "name": "Angle",
+      "value": 0.7853981633974483,
+      "value_type": "kUnitless"
+    },
+    "face": {
+      "metaType": "Face",
+      "surfaceType": "kPlaneSurface",
+      "area": 27.725,
+      "centroid": [
+        -1.753,
+        1.5,
+        -5.213
+      ],
+      "orientation": null
+    }
+  },
+  {
+    "type": "HoleFeature",
+    "name": "Hole_16",
+    "holeType": "kDrilledHole",
+    "extentType": "kThroughAllExtent",
+    "extent": {
+      "type": "ThroughAllExtent",
+      "direction": "kPositiveExtentDirection"
+    },
+    "isFlatBottomed": true,
+    "sketchPlane": {
+      "geometry": {
+        "origin": {
+          "x": 0.0,
+          "y": 3.0,
+          "z": 0.0
+        },
+        "normal": {
+          "x": 0.0,
+          "y": 1.0,
+          "z": 0.0
+        },
+        "axis_x": {
+          "x": 1.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "axis_y": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": -1.0
+        }
+      },
+      "index": {
+        "metaType": "Face",
+        "surfaceType": "kPlaneSurface",
+        "area": 95.392,
+        "centroid": [
+          -1.596,
+          3.0,
+          0.341
+        ],
+        "orientation": null
+      }
+    },
+    "holeCenterPoints": [
+      {
+        "x": -2.421660918892437,
+        "y": -0.2571345093500472
+      }
+    ],
+    "holeDiameter": {
+      "name": "Diameter",
+      "value": 2.0,
+      "value_type": "kUnitless"
+    },
+    "depth": 3.0
+  },
+  {
+    "type": "CircularPatternFeature",
+    "name": "CircPattern_17",
+    "isPatternOfBody": false,
+    "count": {
+      "name": "Count",
+      "value": 4.0,
+      "value_type": "kUnitless"
+    },
+    "angle": {
+      "name": "Angle",
+      "value": 6.283185307179586,
+      "value_type": "kUnitless"
+    },
+    "isNaturalAxisDirection": false,
+    "rotationAxis": {
+      "metaType": "AxisEntity",
+      "axisInfo": {
+        "point": {
+          "x": -2.422,
+          "y": -11.96,
+          "z": 0.257
+        },
+        "direction": {
+          "x": 0.0,
+          "y": 1.0,
+          "z": 0.0
+        }
+      }
+    },
+    "featuresToPattern": [
+      "Revolve_7"
+    ]
+  },
+  {
+    "type": "ShellFeature",
+    "name": "Shell_19",
+    "thickness": {
+      "name": "Thickness",
+      "value": 0.1,
+      "value_type": "kUnitless"
+    },
+    "direction": "kInsideShellDirection",
+    "inputFaces": [
+      {
+        "metaType": "Face",
+        "surfaceType": "kPlaneSurface",
+        "area": 101.287,
+        "centroid": [
+          -1.593,
+          0.0,
+          0.341
+        ],
+        "orientation": null
+      }
+    ]
+  }
+]

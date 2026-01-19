@@ -23,7 +23,7 @@ from inventor_utils.features import (
     add_work_point,
 )
 
-from inventor_utils.geometry import PlaneEntityWrapper
+from inventor_utils.geometry import PlaneEntityWrapper, Point3D
 from inventor_utils.indexing import EntityIndexHelper, get_feature_by_name
 from inventor_utils.transient import (
     add_sketch,
@@ -205,12 +205,12 @@ def _rebuild_extrude(
         dist = extent.get("distance")
         if dist is None:
             raise ValueError("[rebuild] Extrude missing distance; skipping extrude")
-        ext_def.SetDistanceExtent(dist["expression"], dir_const)
+        ext_def.SetDistanceExtent(dist["value"], dir_const)
 
         if feat["isTwoDirectional"]:
             dist2 = extent.get("distanceTwo")
             if dist2 is not None:
-                ext_def.SetDistanceExtentTwo(dist2["expression"])
+                ext_def.SetDistanceExtentTwo(dist2["value"])
     elif ext_type == "kToExtent":
         #   d['type'] = "ToExtent"
         # d["toEntity"] = self.to_entity
@@ -314,7 +314,7 @@ def _rebuild_revolve(
     except Exception as e:
         print(f"[rebuild] Failed to parse revolve axisEntity: {e}; skipping")
         return
-
+    out_feature = None
     if extent_type == "kAngleExtent":
         angle = extent.get("angle")
         revolve_direction = extent.get("direction")
@@ -323,12 +323,13 @@ def _rebuild_revolve(
         )
         if angle is None:
             raise ValueError("[rebuild] Revolve missing angle; skipping revolve")
-        com_def.Features.RevolveFeatures.AddByAngle(
-            profile, work_axis, angle["expression"], revolve_direction_const, op_const
+        out_feature = com_def.Features.RevolveFeatures.AddByAngle(
+            profile, work_axis, angle["value"], revolve_direction_const, op_const
         )
     elif extent_type == "kFullSweepExtent":
-        com_def.Features.RevolveFeatures.AddFull(profile, work_axis, op_const)
-
+        out_feature = com_def.Features.RevolveFeatures.AddFull(profile, work_axis, op_const)
+    
+    out_feature.Name = feat.get("name", out_feature.Name)
 
 def _rebuild_fillet(
     com_def, feat: Dict[str, Any], entity_index_helper: EntityIndexHelper
@@ -357,7 +358,7 @@ def _rebuild_fillet(
             raise ValueError(
                 "[rebuild] Fillet edge set missing radius; skipping this edge set"
             )
-        fillet_def.AddConstantRadiusEdgeSet(edge_collection, radius["expression"])
+        fillet_def.AddConstantRadiusEdgeSet(edge_collection, radius["value"])
 
     out_feature = com_def.Features.FilletFeatures.Add(fillet_def)
     out_feature.Name = feat.get("name", out_feature.Name)
@@ -398,7 +399,7 @@ def _rebuild_chamfer(
         return
     if chamfer_type == "kDistance":
         out_feature = com_def.Features.ChamferFeatures.AddUsingDistance(
-            edge_collection, distance1["expression"]
+            edge_collection, distance1["value"]
         )
     elif chamfer_type == "kTwoDistances":
         if distance2 is None:
@@ -409,7 +410,7 @@ def _rebuild_chamfer(
         face_index = feat.get("face")
         face = entity_index_helper.select_face_by_meta(face_index)
         out_feature = com_def.Features.ChamferFeatures.AddUsingTwoDistances(
-            edge_collection, face, distance1["expression"], distance2["expression"]
+            edge_collection, face, distance1["value"], distance2["value"]
         )
     elif chamfer_type == "kDistanceAndAngle":
         angle = feat.get("angle")
@@ -423,7 +424,7 @@ def _rebuild_chamfer(
         select_entity_in_inventor_app(face, False) # debug
 
         out_feature = com_def.Features.ChamferFeatures.AddUsingDistanceAndAngle(
-            edge_collection, face, distance1["expression"], angle["expression"]
+            edge_collection, face, distance1["value"], angle["value"]
         )
     if out_feature is None:
         print("[rebuild] Failed to create chamfer feature; skipping")
@@ -528,17 +529,17 @@ def _rebuild_hole(
 
         out_feature = com_def.Features.HoleFeatures.AddDrilledByDistanceExtent(
             placement,
-            diameter["expression"],
+            diameter["value"],
             depth,
             _const(extent_dir),
             is_flat_bottom,
-            flat_angle["expression"] if flat_angle else None,
+            flat_angle["value"] if flat_angle else None,
         )
     elif extent_type == "kThroughAllExtent":
         direction = extent.get("direction")
         out_feature = com_def.Features.HoleFeatures.AddDrilledByThroughAllExtent(
             placement,
-            diameter["expression"],
+            diameter["value"],
             _const(direction),
         )
     else:
@@ -570,7 +571,7 @@ def _rebuild_shell(
             print(f"[rebuild] Failed to retrieve face for shell: {e}; skipping face")
             continue
     shell_defn = com_def.Features.ShellFeatures.CreateShellDefinition(
-        face_collection, thickness["expression"], _const(direction)
+        face_collection, thickness["value"], _const(direction)
     )
     out_feature = com_def.Features.ShellFeatures.Add(shell_defn)
     out_feature.Name = feat.get("name", out_feature.Name)
@@ -655,7 +656,11 @@ def _rebuild_mirror(
 def _rebuild_circular_pattern(com_def, feat, entity_index_helper: EntityIndexHelper):
     is_pattern_body = feat.get("isPatternOfBody")
     axis_info = feat.get("rotationAxis")
-    axis_entity = entity_index_helper.select_entity_by_meta(axis_info)
+    # axis_entity = entity_index_helper.select_entity_by_meta(axis_info)
+    origin_point = Point3D.from_dict(axis_info['axisInfo']['point'])
+    direction_vector = Point3D.from_dict(axis_info['axisInfo']['direction'])
+    axis_entity = add_work_axe(com_def, origin_point.to_tuple(), direction_vector.to_tuple())
+
     if axis_entity is None:
         raise ValueError("[rebuild] CircularPattern missing axisEntity; skipping")
 
@@ -680,8 +685,8 @@ def _rebuild_circular_pattern(com_def, feat, entity_index_helper: EntityIndexHel
         parent_entities,
         axis_entity,
         is_natural_x_dir,
-        count["expression"],
-        angle["expression"],
+        count["value"],
+        angle["value"],
     )
     out_feature = com_def.Features.CircularPatternFeatures.AddByDefinition(pattern_def)
     out_feature.Name = feat.get("name", out_feature.Name)
@@ -706,7 +711,10 @@ def _rebuild_rectangular_pattern(com_def, feat, entity_index_helper: EntityIndex
         )
     
 
-    x_direction_entity = entity_index_helper.select_entity_by_meta(x_direction_entity_info)
+    # x_direction_entity = entity_index_helper.select_entity_by_meta(x_direction_entity_info)
+    origin_point = Point3D.from_dict(x_direction_entity_info['axisInfo']['point'])
+    direction_vector = Point3D.from_dict(x_direction_entity_info['axisInfo']['direction'])
+    x_direction_entity = add_work_axe(com_def, origin_point.to_tuple(), direction_vector.to_tuple())
     if x_direction_entity is None:
         raise ValueError("[rebuild] RectangularPattern missing xDirectionEntity; skipping")
     
@@ -723,8 +731,8 @@ def _rebuild_rectangular_pattern(com_def, feat, entity_index_helper: EntityIndex
         parent_entities,
         x_direction_entity,
         x_natural_dir,
-        x_count["expression"],
-        x_spacing["expression"],
+        x_count["value"],
+        x_spacing["value"],
         x_spacing_type,
     ) 
     out_feature = com_def.Features.RectangularPatternFeatures.AddByDefinition(pattern_def)

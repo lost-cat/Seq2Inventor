@@ -47,8 +47,11 @@ class Point3D:
             self.z * other.x - self.x * other.z,
             self.x * other.y - self.y * other.x,
         )
-
-
+    def to_dict(self):
+        return {"x": self.x, "y": self.y, "z": self.z}
+    @classmethod
+    def from_dict(cls, d: dict) -> "Point3D":
+        return cls(d.get("x",0), d.get("y",0), d.get("z",0))
     def to_tuple(self):
         return (self.x, self.y, self.z)
 
@@ -153,10 +156,10 @@ class PlaneEntityWrapper:
     def to_dict(self):
         return {
             "geometry": {
-                "origin": self.origin,
-                "normal": self.normal,
-                "axis_x": self.axis_x,
-                "axis_y": self.axis_y,
+                "origin": self.origin.to_dict(),
+                "normal": self.normal.to_dict(),
+                "axis_x": self.axis_x.to_dict(),
+                "axis_y": self.axis_y.to_dict(),
             },
             "index": self.plane_entity_meta if hasattr(self, "plane_entity_meta") else None,
             "metaType": "PlaneEntity",
@@ -217,8 +220,8 @@ class AxisEntityWrapper:
     def to_dict(self):
         return {
             'metaType':'AxisEntity',
-            "start_point": {"x": self.start_point.x, "y": self.start_point.y, "z": self.start_point.z},
-            "direction": {"x": self.direction.x, "y": self.direction.y, "z": self.direction.z},
+            "start_point": self.start_point.to_dict(),
+            "direction": self.direction.to_dict(),
             "index": self.axis_entity_meta,
         }
     def to_work_axis(self, com_def):

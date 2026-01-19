@@ -25,6 +25,8 @@ KEY = {
     "YZ": 31,
     "REFER_PLANE_IDX": 32,
     # sketch entities
+    "PX":38,
+    "PY":39,
     "SPX": 40,
     "SPY": 41,
     "EPX": 42,
@@ -107,14 +109,14 @@ KEY = {
     "MIRROR_PLANE_NZ": 227,
     "REMOVE_ORIGINAL": 228,
     #RectangularPattern specific
-    "RECT_PATTERN_X_COUNT": 240,
-    "RECT_PATTERN_X_SPACING": 241,
+    "RECT_X_COUNT": 240,
+    "RECT_X_SPACING": 241,
     "RECT_IS_PATTERN_BODY": 242,
     "RECT_IS_NARTURE_X_DIR": 243,
     "RECT_X_SPACING_TYPE": 244,
-    "RECT_DIR_X": 248,
-    "RECT_DIR_Y": 249,
-    "RECT_DIR_Z": 250,
+    "RECT_X_DIR_X": 248,
+    "RECT_X_DIR_Y": 249,
+    "RECT_X_DIR_Z": 250,
     "RECT_FEATURE_IDX": 251,
     "RECT_PATTERN_SPACING_TYPE": 252,
     #CircularPattern specific
@@ -128,6 +130,7 @@ KEY = {
     "CIRC_AXIS_OX": 267,
     "CIRC_AXIS_OY": 268,
     "CIRC_AXIS_OZ": 269,
+    "CIRC_FEATURE_IDX": 270,
     
 
 
@@ -206,6 +209,12 @@ EXTENT_ID = {
     "kFullSweepExtent": 4,
     "kThroughAllExtent": 5,
     "kFromToExtent": 6,
+}
+
+SHELL_DIR_ID = {
+    "kBothSidesShellDirection": 0,
+    "kInsideShellDirection": 1,
+    "kOutsideShellDirection": 2,
 }
 
 CHAMFER_TYPE_ID = {

@@ -281,16 +281,16 @@ def is_face_meta_similar(meta1: dict, meta2: dict, tol: float = 1e-3) -> tuple[b
     for a, b in zip(meta1["centroid"], meta2["centroid"]):
         if abs(a - b) > tol:
             return False, "centroid not match"
-    # 判断包围盒是否一致
-    # rangeBox
-    rb1 = meta1['rangeBox']
-    rb2 = meta2['rangeBox']
-    for a, b in zip(rb1['minPoint'], rb2['minPoint']):
-        if abs(a - b) > tol:
-            return False, "rangeBox minPoint not match"    
-    for a, b in zip(rb1['maxPoint'], rb2['maxPoint']):
-        if abs(a - b) > tol:
-            return False, "rangeBox maxPoint not match"    
+
+    #冗余检查 目前不需要
+    # rb1 = meta1['rangeBox']
+    # rb2 = meta2['rangeBox']
+    # for a, b in zip(rb1['minPoint'], rb2['minPoint']):
+    #     if abs(a - b) > tol:
+    #         return False, "rangeBox minPoint not match"    
+    # for a, b in zip(rb1['maxPoint'], rb2['maxPoint']):
+    #     if abs(a - b) > tol:
+    #         return False, "rangeBox maxPoint not match"    
     return True, ""
 
 
@@ -302,9 +302,10 @@ def is_edge_meta_similar(meta1: dict, meta2: dict, tol: float = 1e-3) -> tuple[b
     for a, b in zip(meta1["midpoint"], meta2["midpoint"]):
         if abs(a - b) > tol:
             return False, "midpoint not match"
-    for a, b in zip(meta1["adjacentFaceTypes"], meta2["adjacentFaceTypes"]):
-        if a != b:
-            return False, "adjacentFaceTypes not match"
+    #冗余检查 目前不需要
+    # for a, b in zip(meta1["adjacentFaceTypes"], meta2["adjacentFaceTypes"]):
+    #     if a != b:
+    #         return False, "adjacentFaceTypes not match"
     for a, b in zip(meta1["endpoints"][0], meta2["endpoints"][0]):
         if abs(a - b) > tol:
             return False, "endpoint[0] not match"
