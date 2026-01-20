@@ -797,12 +797,17 @@ class MirrorFeatureWrapper(BaseFeatureWrapper):
             return self.data['operation']
         return None
     
+    def compute_type(self) -> Optional[str]:
+        if 'computeType' in self.data:
+            return self.data['computeType']
+        return None
+    
     def is_mirror_plane_face(self) -> bool:
         if 'isMirrorPlaneFace' in self.data:
             return self.data['isMirrorPlaneFace']
         return False
     def mirror_plane(self) -> Dict[str, Any] | PlaneEntityWrapper:
-        if self.is_mirror_plane_face():
+        if not self.is_mirror_plane_face():
             return PlaneEntityWrapper.from_dict(self.data['mirrorPlane'], self.entity_index_helper)
         else:
             return self.data['mirrorPlane']

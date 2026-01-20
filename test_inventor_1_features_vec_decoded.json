@@ -402,5 +402,25 @@
         "orientation": null
       }
     ]
+  },
+  {
+    "type": "MirrorFeature",
+    "name": "Mirror_21",
+    "isMirrorBody": true,
+    "mirrorPlane": {
+      "metaType": "Face",
+      "surfaceType": "kPlaneSurface",
+      "area": 28.775,
+      "centroid": [
+        3.027,
+        1.5,
+        0.341
+      ],
+      "orientation": null
+    },
+    "isMirrorPlaneFace": true,
+    "computeType": "kIdenticalCompute",
+    "removeOriginal": false,
+    "operation": "kJoinOperation"
   }
 ]

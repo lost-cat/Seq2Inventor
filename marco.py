@@ -108,6 +108,9 @@ KEY = {
     "MIRROR_PLANE_NY": 226,
     "MIRROR_PLANE_NZ": 227,
     "REMOVE_ORIGINAL": 228,
+    "MIRROR_PLANE_FACE_IDX": 229,
+    "MIRROR_COMPUTE_TYPE": 230,
+    "MIRROR_OP": 231,
     #RectangularPattern specific
     "RECT_X_COUNT": 240,
     "RECT_X_SPACING": 241,
@@ -132,11 +135,6 @@ KEY = {
     "CIRC_AXIS_OZ": 269,
     "CIRC_FEATURE_IDX": 270,
     
-
-
-
-
-
 }
 
 SURFACE_TYPE_ID = {
@@ -227,4 +225,10 @@ PATTERN_SPACING_TYPE_ID = {
     "kDefault": 0,
     "kFitted":1,
     "kFitToPathLength":2,
+}
+
+PATTERN_COMPUTE_TYPE_ID = {
+    "kAdjustToModelComputeType": 0,
+    "kIdenticalCompute": 1,
+    "kOptimizedCompute": 2,
 }

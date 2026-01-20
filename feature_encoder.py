@@ -717,14 +717,20 @@ class FeatureEncoder:
         if not isinstance(mirror_wrapper, MirrorFeatureWrapper):
             raise ValueError("Feature is not a MirrorFeatureWrapper")
         is_mirror_body = mirror_wrapper.is_mirror_body()
-
+        is_mirror_plane_face = mirror_wrapper.is_mirror_plane_face()
+        if is_mirror_plane_face:
+            face_meta = mirror_wrapper.mirror_plane()
+            if not isinstance(face_meta, dict):
+                raise ValueError("Mirror feature mirror plane expected to be face metadata")
+            
+            
         mirror_plane = mirror_wrapper.mirror_plane()
-
         if mirror_plane is None:
             raise ValueError("Mirror feature missing mirror plane")
         mirror_plane_point = None
         mirror_plane_normal = None
-        if isinstance(mirror_plane, dict):
+        face_idx = None
+        if isinstance(mirror_plane, dict): #is_mirror_plane_face == True
             face_meta = mirror_plane
             mirror_plane_normal = Point3D(
                 face_meta["orientation"][0],
@@ -735,6 +741,9 @@ class FeatureEncoder:
                 face_meta["centroid"][0],
                 face_meta["centroid"][1],
                 face_meta["centroid"][2],
+            )
+            face_idx = self.add_selection(
+                face_meta, is_face=True
             )
         else:
             geom = mirror_plane.to_dict().get("geometry", {})
@@ -760,12 +769,22 @@ class FeatureEncoder:
                     feature_idxs.extend(fidxs)
         else:
             feature_idxs = []
+        
+        compute_type = mirror_wrapper.compute_type()
+        operation = mirror_wrapper.operation()
+        if not check(compute_type) or not check(operation):
+            raise ValueError("Mirror feature missing computeType or operation")
+        
         seq = self.seq
         add_instr_boundary(*seq, begin=True)
         push_kv(*seq, KEY["TYPE"], TYPE_ID["Mirror"], 0, 0)
         mirror_idx = self.reserve_idx()
         push_kv(*seq, KEY["IDX"], mirror_idx, 0.0, 0)
         push_kv(*seq, KEY["IS_MIRROR_BODY"], 1 if is_mirror_body else 0, 0.0, 0)
+        push_kv(*seq, KEY["MIRROR_COMPUTE_TYPE"], PATTERN_COMPUTE_TYPE_ID.get(compute_type, 0), 0.0, 0) # type: ignore
+        push_kv(*seq, KEY["MIRROR_OP"], OP_ID.get(operation, 0), 0.0, 0) # type: ignore
+        if is_mirror_plane_face and face_idx is not None:
+            push_kv(*seq, KEY["MIRROR_PLANE_FACE_IDX"], face_idx, 0.0, 0)
         if not is_mirror_body:
             for fidx in feature_idxs:
                 push_kv(*seq, KEY["MIRROR_FEATURE_IDX"], fidx, 0.0, 0)
@@ -927,6 +946,9 @@ class FeatureEncoder:
         SURFACE_TYPE_ID_MAP = vocab.get("SURFACE_TYPE_ID", SURFACE_TYPE_ID)
         EDGE_TYPE_ID_MAP = vocab.get("EDGE_TYPE_ID", EDGE_TYPE_ID)
         ENTITY_ID_MAP = vocab.get("ENTITY_ID", ENTITY_ID)
+        PATTERN_COMPUTE_TYPE_ID_MAP = vocab.get(
+            "PATTERN_COMPUTE_TYPE_ID", PATTERN_COMPUTE_TYPE_ID
+        )
 
         KEY_R = _rev_map(KEY_MAP)
         TYPE_R = _rev_map(TYPE_ID_MAP)
@@ -941,6 +963,11 @@ class FeatureEncoder:
         SURFACE_R = _rev_map(SURFACE_TYPE_ID_MAP) if SURFACE_TYPE_ID_MAP else {}
         EDGE_R = _rev_map(EDGE_TYPE_ID_MAP) if EDGE_TYPE_ID_MAP else {}
         ENTITY_R = _rev_map(ENTITY_ID_MAP) if ENTITY_ID_MAP else {}
+        PATTERN_COMPUTE_R = (
+            _rev_map(PATTERN_COMPUTE_TYPE_ID_MAP)
+            if PATTERN_COMPUTE_TYPE_ID_MAP
+            else {}
+        )
 
         repeat_keys = {
             "FILLET_EDGE_IDX",
@@ -1457,34 +1484,43 @@ class FeatureEncoder:
 
             elif tname == "Mirror":
                 is_body = bool(int(keys.get("IS_MIRROR_BODY", 0)))
-                plane = {
-                    "metaType": "PlaneEntity",
-                    "geometry": {
-                        "origin": {
-                            "x": float(keys.get("MIRROR_PLANE_OX", 0.0)),
-                            "y": float(keys.get("MIRROR_PLANE_OY", 0.0)),
-                            "z": float(keys.get("MIRROR_PLANE_OZ", 0.0)),
+                if "MIRROR_PLANE_FACE_IDX" in keys:
+                    face_id = int(keys.get("MIRROR_PLANE_FACE_IDX", 0))
+                    plane = selections.get(face_id, {})
+                else:
+                    plane = {
+                        "metaType": "PlaneEntity",
+                        "geometry": {
+                            "origin": {
+                                "x": float(keys.get("MIRROR_PLANE_OX", 0.0)),
+                                "y": float(keys.get("MIRROR_PLANE_OY", 0.0)),
+                                "z": float(keys.get("MIRROR_PLANE_OZ", 0.0)),
+                            },
+                            "normal": {
+                                "x": float(keys.get("MIRROR_PLANE_NX", 0.0)),
+                                "y": float(keys.get("MIRROR_PLANE_NY", 0.0)),
+                                "z": float(keys.get("MIRROR_PLANE_NZ", 0.0)),
+                            },
+                            "axis_x": {"x": 1.0, "y": 0.0, "z": 0.0}, # 平面定义不需要轴方向，但保持结构一致
+                            "axis_y": {"x": 0.0, "y": 1.0, "z": 0.0}, # 平面定义不需要轴方向，但保持结构一致
                         },
-                        "normal": {
-                            "x": float(keys.get("MIRROR_PLANE_NX", 0.0)),
-                            "y": float(keys.get("MIRROR_PLANE_NY", 0.0)),
-                            "z": float(keys.get("MIRROR_PLANE_NZ", 0.0)),
-                        },
-                        "axis_x": {"x": 1.0, "y": 0.0, "z": 0.0},
-                        "axis_y": {"x": 0.0, "y": 1.0, "z": 0.0},
-                    },
-                }
+                    }
+                compute_type = PATTERN_COMPUTE_R.get(
+                    int(keys.get("MIRROR_COMPUTE_TYPE", 0)), "kIdenticalCompute"
+                )
                 feat = {
                     "type": "MirrorFeature",
                     "name": _default_name("Mirror", idx_val),
                     "isMirrorBody": is_body,
                     "mirrorPlane": plane,
-                    "isMirrorPlaneFace": False,
-                    "computeType": "kComputeDefault",
+                    "isMirrorPlaneFace": "MIRROR_PLANE_FACE_IDX" in keys,
+                    "computeType": compute_type,
                 }
                 if is_body:
                     feat["removeOriginal"] = bool(int(keys.get("REMOVE_ORIGINAL", 0)))
-                    feat["operation"] = "kMirrorComputeDefault"
+                    feat["operation"] = OP_R.get(
+                        int(keys.get("MIRROR_OP", 0)), "kJoinOperation"
+                    )
                 else:
                     feat["featuresToMirror"] = [
                         idx_to_name.get(int(fid), f"Feature_{fid}")

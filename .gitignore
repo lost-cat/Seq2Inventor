@@ -2,3 +2,4 @@ data/
 **/*.pyc
 .idea/
 test_output.step
+OldVersions/

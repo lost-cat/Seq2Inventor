@@ -47,8 +47,12 @@ if __name__ == "__main__":
                     print(f"Failed to open document: {part_file}")
                     continue
                 features = get_all_features(part_doc)
-                json_path = os.path.join(out_dir, os.path.basename(part_file).replace(".ipt", "_features.json"))
-                from feature_wrappers import dump_features_as_json, wrap_feature
+                part_name = os.path.basename(part_file)
+                part_name_no_ext = os.path.splitext(part_name)[0]
+                ipt_file_dir = os.path.join(out_dir, part_name_no_ext)
+                os.makedirs(ipt_file_dir, exist_ok=True)
+                json_path = os.path.join(ipt_file_dir, part_name_no_ext + "_features.json")
+                from feature_wrappers import dump_features_as_json
                 try:
                     if len(features) >=50:
                         failed_files.append({part_file: "Too many features, skip"})
@@ -69,7 +73,7 @@ if __name__ == "__main__":
             import gc
             gc.collect()
     # 保存失败文件列表
-    failed_reason_json = os.path.join(out_dir, "failed_files.json")
+    failed_reason_json = os.path.join(out_dir, "ipt2json_failed_files.json")
     if not os.path.exists(failed_reason_json):
         
         with open(failed_reason_json, "w") as f:

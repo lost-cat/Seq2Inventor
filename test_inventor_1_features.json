@@ -790,5 +790,65 @@
         }
       }
     ]
+  },
+  {
+    "ReferenceKey": "EAIAABAAAACZCQAAAAAAAIAAAAAAAAAA",
+    "type": "MirrorFeature",
+    "name": "镜像1",
+    "mirrorPlane": {
+      "metaType": "Face",
+      "surfaceType": "kPlaneSurface",
+      "area": 28.775,
+      "centroid": [
+        3.027,
+        1.5,
+        0.341
+      ],
+      "orientation": [
+        1.0,
+        0.0,
+        -0.029
+      ],
+      "axisInfo": null,
+      "planeInfo": {
+        "point": {
+          "x": 3.187,
+          "y": 0.0,
+          "z": 5.896
+        },
+        "normal": {
+          "x": 1.0,
+          "y": 0.0,
+          "z": -0.029
+        }
+      },
+      "rangeBox": {
+        "minPoint": [
+          2.868,
+          0.0,
+          -5.213
+        ],
+        "maxPoint": [
+          3.187,
+          3.0,
+          5.896
+        ]
+      },
+      "uvBox": {
+        "minPoint": [
+          -0.0,
+          0.0
+        ],
+        "maxPoint": [
+          11.113,
+          3.0
+        ]
+      }
+    },
+    "isMirrorPlaneFace": true,
+    "computeType": "kIdenticalCompute",
+    "isMirrorBody": true,
+    "removeOriginal": false,
+    "operation": "kJoinOperation"
   }
 ]
