@@ -11,6 +11,7 @@ If output_root omitted, defaults beside the JSON file.
 """
 from __future__ import annotations
 import argparse
+from glob import glob
 import os
 import json
 from typing import Any, Dict, List, Optional, Tuple
@@ -53,7 +54,7 @@ def _save_step(part_doc, out_dir: str, i: int) -> None:
         _emit(f"[error] Save step {i}: {e}")
 
 
-def process_single_json(json_path: str,app, output_root: Optional[str] = None ):
+def process_single_json(json_path: str,app, output_root: Optional[str] = None, keep_steps: bool = False) -> Dict[str, str]:
     json_path = json_path.strip()
     features = _load_features(json_path)
     status ={}
@@ -93,8 +94,8 @@ def process_single_json(json_path: str,app, output_root: Optional[str] = None ):
             break
 
         pump_waiting_messages()
-        _save_step(part, out_dir, i)
-        # status['error_step_'+str(i)] = "ok"
+        if i == len(features) or keep_steps:
+            _save_step(part, out_dir, i)
 
     try:
         part.Close(True)
@@ -106,9 +107,9 @@ def process_single_json(json_path: str,app, output_root: Optional[str] = None ):
 
 
 
-def process_folder(folder: str, output_root: Optional[str] = None, start: int = 0) -> List[Tuple[str, Dict[str, str]]]:
+def process_folder(folder: str, output_root: Optional[str] = None, start: int = 0, keep_steps: bool = False) -> List[Tuple[str, Dict[str, str]]]:
     folder = folder.strip()
-    jsons = [os.path.join(folder, f) for f in os.listdir(folder) if f.lower().endswith('.json')]
+    jsons = [p for p in glob(os.path.join(folder, "**", "*.json"), recursive=True) if not p.endswith("_decoded.json")]
     jsons = sorted(jsons)
     if start > 0:
         jsons = jsons[start:]
@@ -125,7 +126,7 @@ def process_folder(folder: str, output_root: Optional[str] = None, start: int = 
             for jp in pb:
                 pb.set_postfix(file=os.path.basename(jp))
                 try:
-                    status = process_single_json(jp, app, output_root)
+                    status = process_single_json(jp, app, output_root, keep_steps)
                     results.append((jp, status))
                 except Exception as e:
                     _emit(f"[batch] Failed {jp}: {e}")
@@ -145,17 +146,18 @@ def main():
     parser.add_argument("--output_root", type=str, nargs="?", default=None,
                         help="Output root directory. Defaults beside the JSON file(s).")
     parser.add_argument("--start", type=int, default=0, help="Starting index for processing files in a folder.")
+    parser.add_argument("--keep_steps", action="store_true", help="Keep intermediate step files (IPT) after reconstruction.")
     args = parser.parse_args()
     src = args.source
     out = args.output_root
     start = args.start
-
+    keep_steps = args.keep_steps
     if os.path.isdir(src):
-        results = process_folder(src, out,start)
+        results = process_folder(src, out,start, keep_steps)
     else:
-        results = process_single_json(src, out)
+        results = process_single_json(src, out, keep_steps)
 
-    result_file = os.path.join(os.path.dirname(out), "reconstruction_results.json") if out else "reconstruction_results.json"
+    result_file = os.path.join(os.path.dirname(out), "json2ipt.json") if out else "json2ipt.json"
     try:
         with open(result_file, "w", encoding="utf-8") as f:
             json.dump(results, f, indent=2)
