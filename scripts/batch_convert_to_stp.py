@@ -3,9 +3,12 @@
 # Ensure repository root is on sys.path when running from scripts/
 import os
 import sys
-repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-if repo_root not in sys.path:
-    sys.path.insert(0, repo_root)
+
+from pathlib import Path
+# Ensure project root is importable when running as a script
+ROOT_DIR = Path(__file__).resolve().parent.parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
 from inventor_utils.app import com_sta, open_inventor_document, set_inventor_silent
 
 import win32com.client

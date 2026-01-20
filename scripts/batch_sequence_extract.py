@@ -3,6 +3,13 @@ import glob
 import os
 import json
 import tqdm
+import sys
+from pathlib import Path
+
+# Ensure project root is importable when running as a script
+ROOT_DIR = Path(__file__).resolve().parent.parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
 
 from inventor_utils.app import com_sta, get_all_features, get_inventor_application, open_inventor_document, set_inventor_silent
 

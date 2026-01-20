@@ -4,8 +4,16 @@
 import argparse
 import json
 import os
+import sys
+from pathlib import Path
+
+# Ensure project root is importable when running as a script
+ROOT_DIR = Path(__file__).resolve().parent.parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
 
 from feature_encoder import FeatureEncoder
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="")
