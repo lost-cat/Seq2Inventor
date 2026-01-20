@@ -108,7 +108,7 @@ class PlaneEntityWrapper:
                 self.plane_entity_meta = None
                 print(f"Warning: Unable to collect metadata for plane entity. Error: {e}")
         else:
-            print("Skip plane entity metadata collection.because plane_entity is None or not a Face.")
+            # print("Skip plane entity metadata collection.because plane_entity is None or not a Face.")
             self.plane_entity_meta = None
         pass
 

@@ -86,8 +86,8 @@ class AngleExtentWrapper(ExtentWrapper):
         instance = cls()
         instance.type = "AngleExtent"
         instance.inventor_extent = CastTo(extent, "AngleExtent")
-        instance.angle = Parameter(extent.Angle)
-        instance.direction = enum_name(extent.Direction)  # type: ignore
+        instance.angle = Parameter(instance.inventor_extent.Angle)
+        instance.direction = enum_name(instance.inventor_extent.Direction)  # type: ignore
         return instance
 
     def to_dict(self) -> dict:

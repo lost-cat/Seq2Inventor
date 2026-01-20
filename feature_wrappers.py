@@ -373,32 +373,31 @@ class RevolveFeatureWrapper(BaseFeatureWrapper):
             self.feature.AxisEntity, entity_index_helper=self.entity_index_helper
         ).to_dict()
 
-        try:
-            _, self.data["name"] = self._safe_get(self.feature, "Name")
-            self.data["extentType"] = extent_type_name(self.feature.ExtentType)
-            self.data["extent"] = ExtentFactory.from_inventor(self.feature.Extent).to_dict()
 
-            if self.feature.IsTwoDirectional:
-                self.data["isTwoDirectional"] = True
-                self.data["extentTwoType"] = (
-                    extent_type_name(self.feature.ExtentTwoType)
-                    or self.feature.ExtentTwoType
-                )
-                self.data["extentTwo"] = ExtentFactory.from_inventor(
-                    self.feature.ExtentTwo
-                ).to_dict()
+        _, self.data["name"] = self._safe_get(self.feature, "Name")
+        self.data["extentType"] = extent_type_name(self.feature.ExtentType)
+        self.data["extent"] = ExtentFactory.from_inventor(self.feature.Extent).to_dict()
 
-            self.data["operation"] = (
-                operation_name(self.feature.Operation) or self.feature.Operation
+        if self.feature.IsTwoDirectional:
+            self.data["isTwoDirectional"] = True
+            self.data["extentTwoType"] = (
+                extent_type_name(self.feature.ExtentTwoType)
+                or self.feature.ExtentTwoType
             )
+            self.data["extentTwo"] = ExtentFactory.from_inventor(
+                self.feature.ExtentTwo
+            ).to_dict()
 
-            ok_prof, prof = self._safe_get(self.feature, "Profile")
-            if ok_prof and prof is not None:
-                self.data["profile"] = ProfileWrapper(
-                    prof, entity_index_helper=self.entity_index_helper
-                ).to_dict()
-        except Exception:
-            pass
+        self.data["operation"] = (
+            operation_name(self.feature.Operation) or self.feature.Operation
+        )
+
+        ok_prof, prof = self._safe_get(self.feature, "Profile")
+        if ok_prof and prof is not None:
+            self.data["profile"] = ProfileWrapper(
+                prof, entity_index_helper=self.entity_index_helper
+            ).to_dict()
+
         return self.data
     
     def axis_entity(self) -> Optional[AxisEntityWrapper]:

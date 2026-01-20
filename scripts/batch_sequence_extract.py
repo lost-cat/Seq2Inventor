@@ -58,7 +58,7 @@ if __name__ == "__main__":
                 part_name_no_ext = os.path.splitext(part_name)[0]
                 ipt_file_dir = os.path.join(out_dir, part_name_no_ext)
                 os.makedirs(ipt_file_dir, exist_ok=True)
-                json_path = os.path.join(ipt_file_dir, part_name_no_ext + "_features.json")
+                json_path = os.path.join(ipt_file_dir, part_name_no_ext + ".json")
                 from feature_wrappers import dump_features_as_json
                 try:
                     if len(features) >=50:
