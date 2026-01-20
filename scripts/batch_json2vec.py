@@ -6,7 +6,7 @@ import json
 import os
 import sys
 from pathlib import Path
-
+from glob import glob
 # Ensure project root is importable when running as a script
 ROOT_DIR = Path(__file__).resolve().parent.parent
 if str(ROOT_DIR) not in sys.path:
@@ -17,15 +17,15 @@ from feature_encoder import FeatureEncoder
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="")
-    parser.add_argument("--json_dir","")
-    parser.add_argument("--output_dir")
+    parser.add_argument("--json_dir", required=True, help="Directory containing JSON files.")
+    parser.add_argument("--output_dir", required=True, help="Directory to save output vector JSON files.")
 
     
     args = parser.parse_args()
     json_dir = args.json_dir
     out_dir = args.output_dir
-    import glob
-    json_files = glob.glob(os.path.join(json_dir,"**/*.json"),recursive=True)
+    json_files = [p for p in glob(os.path.join(json_dir, "**", "*.json"), recursive=True) if not p.endswith("_decoded.json")]
+    json_files = sorted(json_files)
     print(f"total {len(json_files)}")
     import tqdm
     pbar = tqdm.tqdm(json_files)
@@ -48,7 +48,7 @@ if __name__ == "__main__":
         except Exception as e:
             failed_reasons[json_path] = str(e)
         
-    failed_reason_path =  os.path.join(out_dir,"failed_reason.json")
+    failed_reason_path =  os.path.join(out_dir,"json2vec_failed_reason.json")
     with open(failed_reason_path,"w", encoding="utf-8") as f:
         json.dump(failed_reasons, f, ensure_ascii=False,indent=2)
     print(f"failed cases are written to {failed_reason_path}")
