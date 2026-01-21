@@ -102,16 +102,19 @@
     "isTwoDirectional": false,
     "axisEntity": {
       "metaType": "AxisEntity",
-      "start_point": {
-        "x": 2.7698745890200627,
-        "y": 3.0,
-        "z": -1.5248298995045508
+      "axisInfo": {
+        "start_point": {
+          "x": 2.7698745890200627,
+          "y": 3.0,
+          "z": -1.5248298995045508
+        },
+        "direction": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 1.0
+        }
       },
-      "direction": {
-        "x": 0.0,
-        "y": 0.0,
-        "z": 1.0
-      }
+      "index": null
     },
     "profile": {
       "SketchPlane": {
@@ -364,7 +367,7 @@
     "rotationAxis": {
       "metaType": "AxisEntity",
       "axisInfo": {
-        "point": {
+        "start_point": {
           "x": -2.422,
           "y": -11.96,
           "z": 0.257
@@ -374,7 +377,8 @@
           "y": 1.0,
           "z": 0.0
         }
-      }
+      },
+      "index": null
     },
     "featuresToPattern": [
       "Revolve_7"
@@ -422,5 +426,41 @@
     "computeType": "kIdenticalCompute",
     "removeOriginal": false,
     "operation": "kJoinOperation"
+  },
+  {
+    "type": "RectangularPatternFeature",
+    "name": "RectPattern_22",
+    "isPatternOfBody": false,
+    "xCount": {
+      "name": "XCount",
+      "value": 2.0,
+      "value_type": "kUnitless"
+    },
+    "xSpacing": {
+      "name": "XSpacing",
+      "value": 3.0,
+      "value_type": "kUnitless"
+    },
+    "xNaturalDirection": true,
+    "xSpacingType": "kDefault",
+    "xDirectionEntity": {
+      "metaType": "AxisEntity",
+      "axisInfo": {
+        "start_point": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "direction": {
+          "x": 1.0,
+          "y": 0.0,
+          "z": 0.0
+        }
+      },
+      "index": null
+    },
+    "featuresToPattern": [
+      "Hole_16"
+    ]
   }
 ]

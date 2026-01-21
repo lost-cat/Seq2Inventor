@@ -109,7 +109,7 @@ def process_single_json(json_path: str,app, output_root: Optional[str] = None, k
 
 def process_folder(folder: str, output_root: Optional[str] = None, start: int = 0, keep_steps: bool = False) -> List[Tuple[str, Dict[str, str]]]:
     folder = folder.strip()
-    jsons = [p for p in glob(os.path.join(folder, "**", "*.json"), recursive=True) if not p.endswith("_decoded.json")]
+    jsons = [p for p in glob(os.path.join(folder, "**", "*.json"), recursive=True) if p.endswith("_decoded.json")]
     jsons = sorted(jsons)
     if start > 0:
         jsons = jsons[start:]

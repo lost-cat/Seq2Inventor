@@ -295,22 +295,10 @@ def _rebuild_revolve(
     if not axis_info:
         print("[rebuild] Revolve missing axisEntity; skipping")
         return
+    axis_entity = None
     try:
-        axis_start = axis_info.get("start_point")
-        axis_dir = axis_info.get("direction")
-        if not (axis_start and axis_dir):
-            print(
-                "[rebuild] Revolve axisEntity missing start_point or direction; skipping"
-            )
-            return
-        app = com_def.Application
-        start_pt = transient_point_3d(
-            app, float(axis_start["x"]), float(axis_start["y"]), float(axis_start["z"])
-        )
-        dir_vec = transient_unit_vector_3d(
-            app, float(axis_dir["x"]), float(axis_dir["y"]), float(axis_dir["z"])
-        )
-        work_axis = com_def.WorkAxes.AddFixed(start_pt, dir_vec)
+        axis_entity = entity_index_helper.select_entity_by_meta(axis_info)
+
     except Exception as e:
         print(f"[rebuild] Failed to parse revolve axisEntity: {e}; skipping")
         return
@@ -324,10 +312,10 @@ def _rebuild_revolve(
         if angle is None:
             raise ValueError("[rebuild] Revolve missing angle; skipping revolve")
         out_feature = com_def.Features.RevolveFeatures.AddByAngle(
-            profile, work_axis, angle["value"], revolve_direction_const, op_const
+            profile, axis_entity, angle["value"], revolve_direction_const, op_const
         )
     elif extent_type == "kFullSweepExtent":
-        out_feature = com_def.Features.RevolveFeatures.AddFull(profile, work_axis, op_const)
+        out_feature = com_def.Features.RevolveFeatures.AddFull(profile, axis_entity, op_const)
     
     out_feature.Name = feat.get("name", out_feature.Name)
 
@@ -656,10 +644,10 @@ def _rebuild_mirror(
 def _rebuild_circular_pattern(com_def, feat, entity_index_helper: EntityIndexHelper):
     is_pattern_body = feat.get("isPatternOfBody")
     axis_info = feat.get("rotationAxis")
-    # axis_entity = entity_index_helper.select_entity_by_meta(axis_info)
-    origin_point = Point3D.from_dict(axis_info['axisInfo']['point'])
-    direction_vector = Point3D.from_dict(axis_info['axisInfo']['direction'])
-    axis_entity = add_work_axe(com_def, origin_point.to_tuple(), direction_vector.to_tuple())
+    axis_entity = entity_index_helper.select_entity_by_meta(axis_info)
+    # origin_point = Point3D.from_dict(axis_info['axisInfo']['point'])
+    # direction_vector = Point3D.from_dict(axis_info['axisInfo']['direction'])
+    # axis_entity = add_work_axe(com_def, origin_point.to_tuple(), direction_vector.to_tuple())
 
     if axis_entity is None:
         raise ValueError("[rebuild] CircularPattern missing axisEntity; skipping")
@@ -711,10 +699,10 @@ def _rebuild_rectangular_pattern(com_def, feat, entity_index_helper: EntityIndex
         )
     
 
-    # x_direction_entity = entity_index_helper.select_entity_by_meta(x_direction_entity_info)
-    origin_point = Point3D.from_dict(x_direction_entity_info['axisInfo']['point'])
-    direction_vector = Point3D.from_dict(x_direction_entity_info['axisInfo']['direction'])
-    x_direction_entity = add_work_axe(com_def, origin_point.to_tuple(), direction_vector.to_tuple())
+    x_direction_entity = entity_index_helper.select_entity_by_meta(x_direction_entity_info)
+    # origin_point = Point3D.from_dict(x_direction_entity_info['axisInfo']['point'])
+    # direction_vector = Point3D.from_dict(x_direction_entity_info['axisInfo']['direction'])
+    # x_direction_entity = add_work_axe(com_def, origin_point.to_tuple(), direction_vector.to_tuple())
     if x_direction_entity is None:
         raise ValueError("[rebuild] RectangularPattern missing xDirectionEntity; skipping")
     

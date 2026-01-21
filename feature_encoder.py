@@ -14,7 +14,7 @@ from feature_wrappers import (
     ShellFeatureWrapper,
 )
 from inventor_utils.extent_types import ExtentFactory, ExtentWrapper
-from inventor_utils.geometry import Point3D
+from inventor_utils.geometry import AxisEntityWrapper, PlaneEntityWrapper, Point3D
 from inventor_utils.metadata import (
     get_axis_direction_from_metadata,
     get_axis_origin_from_metadata,
@@ -144,19 +144,19 @@ class FeatureEncoder:
                 if not isinstance(hole_wrapper, HoleFeatureWrapper):
                     raise ValueError("Feature is not a HoleFeatureWrapper")
                 feat_idx.append(self.add_hole(hole_wrapper))
-                continue
+
             elif t == "ShellFeature":
                 shell_wrapper = FeatureWrapperFactory.from_dict(feat)
                 if not isinstance(shell_wrapper, ShellFeatureWrapper):
                     raise ValueError("Feature is not a ShellFeatureWrapper")
                 feat_idx.append(self.add_shell(shell_wrapper))
-                continue
+
             elif t == "MirrorFeature":
                 mirror_wrapper = FeatureWrapperFactory.from_dict(feat)
                 if not isinstance(mirror_wrapper, MirrorFeatureWrapper):
                     raise ValueError("Feature is not a MirrorFeatureWrapper")
                 feat_idx.append(self.add_mirror(mirror_wrapper))
-                continue
+
             elif t == "RectangularPatternFeature":
                 rect_pattern_wrapper = FeatureWrapperFactory.from_dict(feat)
                 if not isinstance(
@@ -166,16 +166,14 @@ class FeatureEncoder:
                         "Feature is not a RectangularPatternFeatureWrapper"
                     )
                 feat_idx.append(self.add_rectangular_pattern(rect_pattern_wrapper))
-                continue
+
             elif t == "CircularPatternFeature":
                 circ_pattern_wrapper = FeatureWrapperFactory.from_dict(feat)
                 if not isinstance(circ_pattern_wrapper, CircularPatternFeatureWrapper):
                     raise ValueError("Feature is not a CircularPatternFeatureWrapper")
                 feat_idx.append(self.add_circular_pattern(circ_pattern_wrapper))
-                continue
             else:
                 raise ValueError(f"Unsupported feature type: {t}")
-                continue
 
             if feat_name not in self.name2idx_map:
                 self.name2idx_map[feat_name] = feat_idx
@@ -843,7 +841,7 @@ class FeatureEncoder:
         )
         push_kv(*self.seq, KEY["RECT_X_COUNT"], x_count.value, 0.0, 0)
         push_kv(*self.seq, KEY["RECT_X_SPACING"], 0, rnd(x_spacing.value), 1)
-        push_kv(*self.seq, KEY["RECT_X_NATURAL_DIR"], 1 if is_natural_x else 0, 0.0, 0)
+        push_kv(*self.seq, KEY["RECT_IS_NARTURE_X_DIR"], 1 if is_natural_x else 0, 0.0, 0)
         push_kv(*self.seq, KEY["RECT_X_SPACING_TYPE"], PATTERN_SPACING_TYPE_ID[spacing_type], 0.0, 0)  # type: ignore
         push_kv(*self.seq, KEY["RECT_X_DIR_X"], 0, rnd(x_direction[0]), 1)
         push_kv(*self.seq, KEY["RECT_X_DIR_Y"], 0, rnd(x_direction[1]), 1)
@@ -1339,6 +1337,7 @@ class FeatureEncoder:
                 ext_idx = int(keys.get("EXTENT_ONE", 0)) if "EXTENT_ONE" in keys else 0
                 axis_entity = {
                     "metaType": "AxisEntity",
+                    "axisInfo": {
                     "start_point": {
                         "x": float(keys.get("AXIS_X", 0.0)),
                         "y": float(keys.get("AXIS_Y", 0.0)),
@@ -1349,6 +1348,8 @@ class FeatureEncoder:
                         "y": float(keys.get("AXIS_DIR_Y", 0.0)),
                         "z": float(keys.get("AXIS_DIR_Z", 0.0)),
                     },
+                    },
+                    "index": None,
                 }
                 feat = {
                     "type": "RevolveFeature",
@@ -1488,23 +1489,21 @@ class FeatureEncoder:
                     face_id = int(keys.get("MIRROR_PLANE_FACE_IDX", 0))
                     plane = selections.get(face_id, {})
                 else:
-                    plane = {
-                        "metaType": "PlaneEntity",
-                        "geometry": {
-                            "origin": {
-                                "x": float(keys.get("MIRROR_PLANE_OX", 0.0)),
-                                "y": float(keys.get("MIRROR_PLANE_OY", 0.0)),
-                                "z": float(keys.get("MIRROR_PLANE_OZ", 0.0)),
-                            },
-                            "normal": {
-                                "x": float(keys.get("MIRROR_PLANE_NX", 0.0)),
-                                "y": float(keys.get("MIRROR_PLANE_NY", 0.0)),
-                                "z": float(keys.get("MIRROR_PLANE_NZ", 0.0)),
-                            },
-                            "axis_x": {"x": 1.0, "y": 0.0, "z": 0.0}, # 平面定义不需要轴方向，但保持结构一致
-                            "axis_y": {"x": 0.0, "y": 1.0, "z": 0.0}, # 平面定义不需要轴方向，但保持结构一致
-                        },
-                    }
+                    
+                    plane = PlaneEntityWrapper.generate_plane_metadata(
+                        origin=Point3D(
+                            float(keys.get("MIRROR_PLANE_OX", 0.0)),
+                            float(keys.get("MIRROR_PLANE_OY", 0.0)),
+                            float(keys.get("MIRROR_PLANE_OZ", 0.0)),
+                        ),
+                        normal=Point3D(
+                            float(keys.get("MIRROR_PLANE_NX", 0.0)),
+                            float(keys.get("MIRROR_PLANE_NY", 0.0)),
+                            float(keys.get("MIRROR_PLANE_NZ", 0.0)),
+                        ),
+                        axis_x=Point3D(1.0, 0.0, 0.0),
+                        axis_y=Point3D(0.0, 1.0, 0.0),
+                    )
                 compute_type = PATTERN_COMPUTE_R.get(
                     int(keys.get("MIRROR_COMPUTE_TYPE", 0)), "kIdenticalCompute"
                 )
@@ -1549,13 +1548,10 @@ class FeatureEncoder:
                     float(keys.get("RECT_X_DIR_Y", keys.get("RECT_DIR_Y", 0.0))),
                     float(keys.get("RECT_X_DIR_Z", keys.get("RECT_DIR_Z", 0.0))),
                 )
-                x_dir_meta = {
-                    "metaType": "AxisEntity",
-                    "axisInfo": {
-                        "point": {"x": 0.0, "y": 0.0, "z": 0.0},
-                        "direction": {"x": x_dir[0], "y": x_dir[1], "z": x_dir[2]},
-                    },
-                }
+                x_dir_meta = AxisEntityWrapper.generate_axis_metadata(
+                    start_point=Point3D(0.0, 0.0, 0.0), # TODO: origin point?
+                    direction=Point3D(x_dir[0], x_dir[1], x_dir[2]),
+                )
                 feat = {
                     "type": "RectangularPatternFeature",
                     "name": _default_name("RectPattern", idx_val),
@@ -1593,21 +1589,12 @@ class FeatureEncoder:
                     float(keys.get("CIRC_AXIS_OY", 0.0)),
                     float(keys.get("CIRC_AXIS_OZ", 0.0)),
                 )
-                axis_meta = {
-                    "metaType": "AxisEntity",
-                    "axisInfo": {
-                        "point": {
-                            "x": axis_origin[0],
-                            "y": axis_origin[1],
-                            "z": axis_origin[2],
-                        },
-                        "direction": {
-                            "x": axis_dir[0],
-                            "y": axis_dir[1],
-                            "z": axis_dir[2],
-                        },
-                    },
-                }
+                axis_meta = AxisEntityWrapper.generate_axis_metadata(
+                    start_point=Point3D(
+                        axis_origin[0], axis_origin[1], axis_origin[2]
+                    ),
+                    direction=Point3D(axis_dir[0], axis_dir[1], axis_dir[2]),
+                )
                 feat = {
                     "type": "CircularPatternFeature",
                     "name": _default_name("CircPattern", idx_val),

@@ -331,7 +331,7 @@ def get_plane_normal_from_metadata(meta_data: dict):
         direction = axis_info['direction']
         return _normalize_vector((direction['x'], direction['y'], direction['z']))
     elif meta_type == "AxisEntity": # 把轴线方向当作法向量
-        dir = meta_data['direction']
+        dir = meta_data['axisInfo']['direction']
         if isinstance(dir, dict):
             dir = (float(dir.get("x", 0.0)), float(dir.get("y", 0.0)), float(dir.get("z", 0.0)))
         elif isinstance(dir, (list, tuple)):
@@ -369,7 +369,7 @@ def get_axis_direction_from_metadata(meta_data: dict):
         direction = axis_info['direction']
         return _normalize_vector((direction['x'], direction['y'], direction['z']))
     elif meta_type == "AxisEntity": 
-        dir = meta_data['direction']
+        dir = meta_data['axisInfo']['direction']
         if isinstance(dir, dict):
             dir = (float(dir.get("x", 0.0)), float(dir.get("y", 0.0)), float(dir.get("z", 0.0)))
         elif isinstance(dir, (list, tuple)):
@@ -409,7 +409,7 @@ def get_axis_origin_from_metadata(meta_data: dict)-> Tuple[float, float, float]:
             raise ValueError("PlaneEntity metadata 'origin' has unexpected format")
         return origin
     elif meta_type == "AxisEntity":
-        origin = meta_data['start_point']
+        origin = meta_data['axisInfo']['start_point']
         if origin is None:
             raise ValueError("AxisEntity metadata missing point")
         # 可能是嵌套的字典

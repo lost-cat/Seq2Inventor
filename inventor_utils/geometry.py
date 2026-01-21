@@ -171,6 +171,20 @@ class PlaneEntityWrapper:
             com_def,origin=self.origin.to_tuple(), x_axis=self.axis_x.to_tuple(), y_axis=self.axis_y.to_tuple()
         )
         return wp
+    
+    @classmethod
+    def generate_plane_metadata(cls,origin:Point3D,normal:Point3D,axis_x, axis_y) -> dict:
+        return {
+            "geometry": {
+                "origin": origin.to_dict(),
+                "normal": normal.to_dict(),
+                "axis_x": axis_x.to_dict() if axis_x else None,
+                "axis_y": axis_y.to_dict() if axis_y else None,
+            },
+            "index": None,
+            "metaType": "PlaneEntity",
+        }
+
 
 
 class AxisEntityWrapper:
@@ -209,8 +223,8 @@ class AxisEntityWrapper:
     @classmethod
     def from_dict(cls, d: dict, entity_index_helper) -> "AxisEntityWrapper":
         instance = AxisEntityWrapper.__new__(AxisEntityWrapper)
-        start_point = d.get("start_point", {})
-        direction = d.get("direction", {})
+        start_point = d.get("axisInfo", {}).get("start_point", {})
+        direction = d.get("axisInfo", {}).get("direction", {})
         instance.start_point = Point3D(start_point.get("x",0), start_point.get("y",0), start_point.get("z",0))
         instance.direction = Point3D(direction.get("x",0), direction.get("y",0), direction.get("z",0))
         # instance.axis_entity = entity_index_helper.select_entity_by_metadata(d.get("index"))
@@ -220,8 +234,10 @@ class AxisEntityWrapper:
     def to_dict(self):
         return {
             'metaType':'AxisEntity',
+            'axisInfo':{
             "start_point": self.start_point.to_dict(),
             "direction": self.direction.to_dict(),
+            },
             "index": self.axis_entity_meta,
         }
     def to_work_axis(self, com_def):
@@ -229,6 +245,17 @@ class AxisEntityWrapper:
         wp = add_work_axe(com_def,origin=self.start_point.to_tuple(), axis=self.direction.to_tuple()
         )
         return wp
+    
+    @classmethod
+    def generate_axis_metadata(cls, start_point:Point3D, direction:Point3D) -> dict:
+        return {
+            'metaType':'AxisEntity',
+            'axisInfo':{
+            "start_point": start_point.to_dict(),
+            "direction": direction.to_dict(),
+            },
+            "index": None,
+        }
 
 
 class SketchPoint:

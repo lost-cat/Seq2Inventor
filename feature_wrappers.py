@@ -591,6 +591,10 @@ class HoleFeatureWrapper(BaseFeatureWrapper):
         self.data["type"] = "HoleFeature"
         _, self.data["name"] = self._safe_get(self.feature, "Name")
         self.data["holeType"] = enum_name(self.feature.HoleType)  # type: ignore
+        if self.data["holeType"] != "kDrilledHole":
+            raise NotImplementedError(
+                f"Hole type {self.data['holeType']} not implemented in to_dict"
+            )
         self.data["extentType"] = extent_type_name(self.feature.ExtentType)
         self.data["extent"] = ExtentFactory.from_inventor(self.feature.Extent).to_dict()
         self.data["isFlatBottomed"] = self.feature.FlatBottom
