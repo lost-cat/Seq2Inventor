@@ -19,6 +19,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="")
     parser.add_argument("--json_dir", required=True, help="Directory containing JSON files.")
     parser.add_argument("--output_dir", required=True, help="Directory to save output vector JSON files.")
+    parser.add_argument("--decode", action="store_true", help="Decode vector JSON files back to feature JSON.")
 
     
     args = parser.parse_args()
@@ -45,6 +46,11 @@ if __name__ == "__main__":
             payload = encoder.encode(features)
             with open(out_json_path,"w", encoding="utf-8") as f:
                 json.dump(payload, f, ensure_ascii=False)
+            if args.decode:
+                decoded_json = FeatureEncoder.decode(payload)
+                decoded_json_path = os.path.join(out_path_dir,base_name_without_ext + "_decoded.json")
+                with open(decoded_json_path,"w", encoding="utf-8") as f:
+                    json.dump(decoded_json, f, ensure_ascii=False, indent=2)
         except Exception as e:
             failed_reasons[json_path] = str(e)
         
