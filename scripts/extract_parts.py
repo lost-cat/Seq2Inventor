@@ -1,36 +1,17 @@
-#!/usr/bin/env python3
-"""
-Extract Inventor part files from archives and directories.
 
-- Recursively scans a source folder (default: data/inventor_parts)
-- Extracts supported archives (zip, tar, tar.gz, tgz, tar.bz2, tbz2) to a temp folder under the source
-- Finds all .ipt files (case-insensitive) from both the extracted content and regular subdirectories
-- Copies them into a flat destination folder (default: data/parts), adding suffixes to avoid name collisions
-
-Usage (PowerShell):
-    python extract_parts.py --src data/inventor_parts --dst data/parts
-
-Options:
-    --clean-extracted       Remove the temporary extracted folder after finishing
-    --dry-run               Show what would happen without making changes
-    --also-scan-dirs        Also scan non-archive directories under --src for *.ipt (default: true); use --no-also-scan-dirs to disable
-    --seq-start N           Starting index for sequential naming (default: next available based on existing files)
-    --seq-width W           Zero-padding width for filenames like 0001.ipt (default: 4)
-
-Notes:
-- Only stdlib archive formats are supported. 7z/rar are skipped with a warning.
-- Destination file naming: <archive_stem>__<file_stem>[__N].ipt to avoid collisions. For files from non-archive dirs, <dir_stem>__<file_stem>[__N].ipt.
-"""
 from __future__ import annotations
-
+from pathlib import Path
+# Ensure project root is importable when running as a script
+ROOT_DIR = Path(__file__).resolve().parent.parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
 import argparse
 import os
 import shutil
 import sys
 import tarfile
-import tempfile
 import zipfile
-from pathlib import Path
+
 import re
 from typing import Iterable, Iterator, List, Optional, Tuple
 

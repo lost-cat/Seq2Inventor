@@ -45,27 +45,23 @@ def _load_features(json_path: str) -> List[Dict[str, Any]]:
     return data if isinstance(data, list) else data.get("features", [])
 
 
-def _save_step(part_doc, out_dir: str, i: int) -> None:
-    step_path = os.path.join(out_dir, f"step_{i:03d}.ipt")
+def _save_step(part_doc, ipt_path: Path, i: int, is_last: bool) -> None:
+    if not is_last:
+        ipt_path = ipt_path / f"_{i:03d}.ipt"
     try:
-        part_doc.SaveAs(step_path, False)
+        part_doc.SaveAs(str(ipt_path), False)
     except Exception as e:
         _emit(f"[error] Save step {i}: {e}")
 
 
-def process_single_json(json_path: str,app, output_root: Optional[str] = None, keep_steps: bool = False) -> Dict[str, str]:
-    json_path = json_path.strip()
-    features = _load_features(json_path)
+def process_single_json(json_path: Path,app, keep_steps: bool = False) -> Dict[str, str]:
+    features = _load_features(str(json_path))
     status ={}
     if not features:
         status["error"] = f"No features in {json_path}"
         return status
 
-    out_root = output_root.strip() if output_root else None
-    if not out_root:
-        out_root = os.path.dirname(json_path)
-    out_dir = os.path.join(out_root, _basename_no_ext(json_path))
-    _ensure_dir(out_dir)
+    out_ipt_path = json_path.with_suffix(".ipt")
 
     # Reuse provided app without reinitializing COM or toggling silent here
     # New part per JSON
@@ -94,7 +90,7 @@ def process_single_json(json_path: str,app, output_root: Optional[str] = None, k
 
         pump_waiting_messages()
         if i == len(features) or keep_steps:
-            _save_step(part, out_dir, i)
+            _save_step(part, out_ipt_path, i ,i == len(features))
 
     try:
         part.Close(True)
@@ -106,12 +102,15 @@ def process_single_json(json_path: str,app, output_root: Optional[str] = None, k
 
 
 
-def process_folder(folder: str, output_root: Optional[str] = None, start: int = 0, keep_steps: bool = False) -> List[Tuple[str, Dict[str, str]]]:
-    folder = folder.strip()
-    jsons = [p for p in glob(os.path.join(folder, "**", "*.json"), recursive=True) if p.endswith("_decoded.json")]
-    jsons = sorted(jsons)
+def process_folder(data_root: Path, output_root: Optional[str] = None, start: int = 0, keep_steps: bool = False
+                   ,postfix = '') -> List[Tuple[str, Dict[str, str]]]:
+    # Ensure data_root is a Path object
+    data_root = data_root.resolve()
+    subdir_names = [p.name for p in data_root.iterdir() if p.is_dir()]
+    print("subdirectories:", subdir_names)
+    subdir_names = sorted(subdir_names)
     if start > 0:
-        jsons = jsons[start:]
+        subdir_names = subdir_names[start:]
     
     results: List[Tuple[str, Dict[str, str]]] = []
     # Initialize COM and app once for the whole batch
@@ -121,11 +120,15 @@ def process_folder(folder: str, output_root: Optional[str] = None, start: int = 
             raise RuntimeError("Inventor application is not available")
         set_inventor_silent(app, True)
         try:
-            pb = tqdm.tqdm(jsons, desc="Reconstructing models", unit="file")
+            pb = tqdm.tqdm(subdir_names, desc="Reconstructing models", unit="file")
             for jp in pb:
                 pb.set_postfix(file=os.path.basename(jp))
                 try:
-                    status = process_single_json(jp, app, output_root, keep_steps)
+                    json_path = data_root / jp / (jp + postfix + ".json")
+                    if not json_path.exists():
+                        raise FileNotFoundError(f"JSON file does not exist: {json_path}")
+
+                    status = process_single_json(json_path, app, keep_steps=keep_steps)
                     results.append((jp, status))
                 except Exception as e:
                     _emit(f"[batch] Failed {jp}: {e}")
@@ -141,22 +144,23 @@ def process_folder(folder: str, output_root: Optional[str] = None, start: int = 
 
 def main():
     parser = argparse.ArgumentParser(description="Reconstruct Inventor models step-by-step from features JSON.")
-    parser.add_argument("--source", type=str, help="Path to features JSON file or folder containing JSON files.")
-    parser.add_argument("--output_root", type=str, nargs="?", default=None,
-                        help="Output root directory. Defaults beside the JSON file(s).")
+    parser.add_argument("--data_root", type=str, help="Path to features JSON file or folder containing JSON files.")
     parser.add_argument("--start", type=int, default=0, help="Starting index for processing files in a folder.")
     parser.add_argument("--keep_steps", action="store_true", help="Keep intermediate step files (IPT) after reconstruction.")
+    parser.add_argument("--postfix", type=str, default="", help="Postfix to append to JSON filenames when processing a folder.")
     args = parser.parse_args()
-    src = args.source
-    out = args.output_root
+    data_root = args.data_root
+    data_root = Path(data_root)
+    if not data_root.exists():
+        raise SystemExit(f"data_root {data_root} does not exist.")
     start = args.start
     keep_steps = args.keep_steps
-    if os.path.isdir(src):
-        results = process_folder(src, out,start, keep_steps)
-    else:
-        results = process_single_json(src, out, keep_steps)
+    postfix = args.postfix
+    results = []
+    if data_root.is_dir():
+        results = process_folder(data_root, start=start, keep_steps=keep_steps, postfix=postfix)
 
-    result_file = os.path.join(os.path.dirname(out), "json2ipt.json") if out else "json2ipt.json"
+    result_file = data_root / "reconstruction_results.json"
     try:
         with open(result_file, "w", encoding="utf-8") as f:
             json.dump(results, f, indent=2)
