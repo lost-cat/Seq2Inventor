@@ -1,16 +1,15 @@
-"""
-Rebuild Inventor models step-by-step from features JSON, saving an IPT after
-each feature. Supports the same feature types as reconstruct_from_json.py.
 
-Usage:
-  python reconstruct_models_step_by_step.py <features.json> [output_root]
-  python reconstruct_models_step_by_step.py <folder_with_jsons> [output_root]
-
-Per JSON, outputs into <output_root>/<json_basename>/step_###.ipt
-If output_root omitted, defaults beside the JSON file.
-"""
 from __future__ import annotations
 import argparse
+from pathlib import Path
+import sys
+
+
+# Ensure project root is importable when running as a script
+ROOT_DIR = Path(__file__).resolve().parent.parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+    
 from glob import glob
 import os
 import json

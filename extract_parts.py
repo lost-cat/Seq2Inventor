@@ -213,6 +213,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     else:
         print(f"[info] Found {len(ipt_candidates)} .ipt files to collect.")
 
+    ipt_candidates = sorted(ipt_candidates, key=lambda x: x[1].name.lower())
+
     # 3) Copy with sequential naming
     existing_names = {p.name.lower() for p in dst_root.glob('*.ipt')} if dst_root.exists() else set()
 
