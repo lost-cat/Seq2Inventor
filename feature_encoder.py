@@ -205,6 +205,7 @@ class FeatureEncoder:
 
         sketch_idx = self.add_sketch_start(sketch_plane)
         for path in profile.get("ProfilePaths", []):
+            self.add_path_start()
             for ent in path.get("PathEntities", []):
                 ctype = ent.get("CurveType")
                 if ctype == "kLineSegmentCurve2d":
@@ -213,8 +214,22 @@ class FeatureEncoder:
                     idx = self.add_arc(ent)
                 elif ctype == "kCircleCurve2d":
                     idx = self.add_circle(ent)
+            
+            self.add_path_end()
+            
         self.add_sketch_end(sketch_idx)
+
         return sketch_idx
+
+    def add_path_end(self):
+        add_instr_boundary(*self.seq, begin=True)
+        push_kv(*self.seq, KEY["TYPE"], TYPE_ID["PathEnd"], 0.0, 0)
+        add_instr_boundary(*self.seq, begin=False)
+
+    def add_path_start(self):
+        add_instr_boundary(*self.seq, begin=True)
+        push_kv(*self.seq, KEY["TYPE"], TYPE_ID["PathStart"], 0.0, 0)
+        add_instr_boundary(*self.seq, begin=False)
 
     def add_sketch_start(
         self,
@@ -1105,6 +1120,7 @@ class FeatureEncoder:
 
         sketches: Dict[int, Dict[str, Any]] = {}
         cur_sketch: Optional[int] = None
+        cur_path: Optional[List[Any]] = None
         for ins in instructions:
             tname = ins.get("type_name")
             keys = ins.get("keys", {})
@@ -1141,12 +1157,22 @@ class FeatureEncoder:
                         if "REFER_PLANE_IDX" in keys
                         else None
                     ),
-                    "entities": [],
+                    "paths": [],
                     "points": [],
                 }
+            elif tname == "PathStart" and cur_sketch is not None:
+                # Start a new path for this sketch
+                cur_path = []
+            elif tname == "PathEnd" and cur_sketch is not None:
+                # End the current path and add it to the sketch
+                if cur_path is not None:
+                    sketches[cur_sketch]["paths"].append(cur_path)
+                cur_path = None
             elif tname in ("Line", "Arc", "Circle") and cur_sketch is not None:
                 ent: Dict[str, Any] = {"t": tname, "keys": keys}
-                sketches[cur_sketch]["entities"].append(ent)
+                if cur_path is None:
+                    raise ValueError("Path entity found without starting a path")
+                cur_path.append(ent)
             elif tname == "Point" and cur_sketch is not None:
                 sketches[cur_sketch]["points"].append(
                     (float(keys.get("PX", 0.0)), float(keys.get("PY", 0.0)))
@@ -1231,18 +1257,17 @@ class FeatureEncoder:
             if ref_idx_val is not None:
                 plane["index"] = selections.get(int(ref_idx_val), {})
             return plane
-
-        def _make_profile(sketch_idx: int) -> Dict[str, Any]:
-            sk = sketches.get(int(sketch_idx), None)
-            if sk is None:
-                return {}
-            path_entities: List[Dict[str, Any]] = []
-            for ent in sk.get("entities", []):
-                ekeys = ent.get("keys", {})
-                if ent.get("t") == "Line":
-                    path_entities.append(
-                        {
-                            "CurveType": "kLineSegmentCurve2d",
+        
+        def _make_paths(sk: Dict[str, Any]) -> List[Dict[str, Any]]:
+            profile_paths = []
+            for path in sk.get("paths", []):
+                path_entities: List[Dict[str, Any]] = []
+                for ent in path:
+                    ekeys = ent.get("keys", {})
+                    if ent.get("t") == "Line":
+                        path_entities.append(
+                            {
+                                "CurveType": "kLineSegmentCurve2d",
                             "StartSketchPoint": {
                                 "x": float(ekeys.get("SPX", 0.0)),
                                 "y": float(ekeys.get("SPY", 0.0)),
@@ -1253,51 +1278,57 @@ class FeatureEncoder:
                             },
                         }
                     )
-                elif ent.get("t") == "Circle":
-                    path_entities.append(
-                        {
-                            "CurveType": "kCircleCurve2d",
-                            "Curve": {
-                                "center": {
-                                    "x": float(ekeys.get("CX", 0.0)),
-                                    "y": float(ekeys.get("CY", 0.0)),
+                    elif ent.get("t") == "Circle":
+                        path_entities.append(
+                            {
+                                "CurveType": "kCircleCurve2d",
+                                "Curve": {
+                                    "center": {
+                                        "x": float(ekeys.get("CX", 0.0)),
+                                        "y": float(ekeys.get("CY", 0.0)),
+                                    },
+                                    "radius": float(ekeys.get("R", 0.0)),
                                 },
-                                "radius": float(ekeys.get("R", 0.0)),
-                            },
-                        }
-                    )
-                elif ent.get("t") == "Arc":
-                    cx = float(ekeys.get("CX", 0.0))
-                    cy = float(ekeys.get("CY", 0.0))
-                    r = float(ekeys.get("R", 0.0))
-                    sa = float(ekeys.get("SA", 0.0))
-                    sw = float(ekeys.get("SW", 0.0))
-                    sp = {}
-                    sp["x"] = float(ekeys.get("SPX", 0.0))
-                    sp["y"] = float(ekeys.get("SPY", 0.0))
-                    ep = {}
-                    ep["x"] = float(ekeys.get("EPX", 0.0))
-                    ep["y"] = float(ekeys.get("EPY", 0.0))
-                    path_entities.append(
-                        {
-                            "CurveType": "kCircularArcCurve2d",
-                            "Curve": {
-                                "center": {"x": cx, "y": cy},
-                                "radius": r,
-                                "startAngle": sa,
-                                "sweepAngle": sw,
-                            },
-                            "StartSketchPoint": sp,
-                            "EndSketchPoint": ep,
-                        }
-                    )
+                            }
+                        )
+                    elif ent.get("t") == "Arc":
+                        cx = float(ekeys.get("CX", 0.0))
+                        cy = float(ekeys.get("CY", 0.0))
+                        r = float(ekeys.get("R", 0.0))
+                        sa = float(ekeys.get("SA", 0.0))
+                        sw = float(ekeys.get("SW", 0.0))
+                        sp = {}
+                        sp["x"] = float(ekeys.get("SPX", 0.0))
+                        sp["y"] = float(ekeys.get("SPY", 0.0))
+                        ep = {}
+                        ep["x"] = float(ekeys.get("EPX", 0.0))
+                        ep["y"] = float(ekeys.get("EPY", 0.0))
+                        path_entities.append(
+                            {
+                                "CurveType": "kCircularArcCurve2d",
+                                "Curve": {
+                                    "center": {"x": cx, "y": cy},
+                                    "radius": r,
+                                    "startAngle": sa,
+                                    "sweepAngle": sw,
+                                },
+                                "StartSketchPoint": sp,
+                                "EndSketchPoint": ep,
+                            }
+                        )
+                profile_paths.append({"PathEntities": path_entities})
+
+            return profile_paths
+        
+        def _make_profile(sketch_idx: int) -> Dict[str, Any]:
+            sk = sketches.get(int(sketch_idx), None)
+            if sk is None:
+                return {}
+            profile_paths = _make_paths(sk)
+ 
             profile = {
                 "SketchPlane": _make_plane_geom(sk),
-                "ProfilePaths": [
-                    {
-                        "PathEntities": path_entities,
-                    }
-                ],
+                "ProfilePaths": profile_paths,
             }
             return profile
 

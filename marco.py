@@ -25,6 +25,8 @@ KEY = {
     "YZ": 31,
     "REFER_PLANE_IDX": 32,
     # sketch entities
+    "PathEnd": 35,
+    "PathStart": 36,
     "PX":38,
     "PY":39,
     "SPX": 40,
