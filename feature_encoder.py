@@ -655,7 +655,6 @@ class FeatureEncoder:
             diameter is None
             or extent is None
             or depth is None
-            or (not is_flat_bottom and bottom_tip_angle is None)
         ):
             raise ValueError("Hole feature missing diameter, extent, or depth")
 
@@ -669,14 +668,17 @@ class FeatureEncoder:
         push_kv(*seq, KEY["DIAMETER"], 0, rnd(diameter.value), 1)
         push_kv(*seq, KEY["HOLE_EXTENT"], extent_idx, 0.0, 0)
         push_kv(*seq, KEY["DEPTH"], 0, rnd(depth), 1)
-        push_kv(
-            *seq,
-            KEY["IS_FLAT_BOTTOM"],
-            1 if hole_wrapper.is_flat_bottomed() else 0,
-            0.0,
-            0,
-        )
-        if not is_flat_bottom and bottom_tip_angle is not None:
+        if is_flat_bottom is not None :
+            if is_flat_bottom is False and bottom_tip_angle is None:
+                is_flat_bottom = True  # default to True if angle is missing
+            push_kv(
+                *seq,
+                KEY["IS_FLAT_BOTTOM"],
+                1 if is_flat_bottom else 0,
+                0.0,
+                0,
+            )
+        if  is_flat_bottom  is False and bottom_tip_angle is not None:
             push_kv(*seq, KEY["BOTTOM_TIP_ANGLE"], 0, rnd(bottom_tip_angle.value), 1)
         add_instr_boundary(*seq, begin=False)
         return hole_idx
@@ -754,6 +756,8 @@ class FeatureEncoder:
                 rnd(n.get("x", 0)), rnd(n.get("y", 0)), rnd(n.get("z", 0))
             )
 
+        operation = None
+        remove_original = None
         if mirror_plane_point is None or mirror_plane_normal is None:
             raise ValueError("Mirror feature missing mirror plane point or normal")
         if not is_mirror_body:
@@ -767,11 +771,12 @@ class FeatureEncoder:
                     feature_idxs.extend(fidxs)
         else:
             feature_idxs = []
+            operation = mirror_wrapper.operation()
+            remove_original = mirror_wrapper.remove_original()
         
         compute_type = mirror_wrapper.compute_type()
-        operation = mirror_wrapper.operation()
-        if not check(compute_type) or not check(operation):
-            raise ValueError("Mirror feature missing computeType or operation")
+        if not check(compute_type):
+            raise ValueError("Mirror feature missing computeType")
         
         seq = self.seq
         add_instr_boundary(*seq, begin=True)
@@ -780,15 +785,17 @@ class FeatureEncoder:
         push_kv(*seq, KEY["IDX"], mirror_idx, 0.0, 0)
         push_kv(*seq, KEY["IS_MIRROR_BODY"], 1 if is_mirror_body else 0, 0.0, 0)
         push_kv(*seq, KEY["MIRROR_COMPUTE_TYPE"], PATTERN_COMPUTE_TYPE_ID.get(compute_type, 0), 0.0, 0) # type: ignore
-        push_kv(*seq, KEY["MIRROR_OP"], OP_ID.get(operation, 0), 0.0, 0) # type: ignore
         if is_mirror_plane_face and face_idx is not None:
             push_kv(*seq, KEY["MIRROR_PLANE_FACE_IDX"], face_idx, 0.0, 0)
         if not is_mirror_body:
             for fidx in feature_idxs:
                 push_kv(*seq, KEY["MIRROR_FEATURE_IDX"], fidx, 0.0, 0)
         else:
-            remove_original = mirror_wrapper.remove_original()
+            if operation is  None or remove_original is None:
+                raise ValueError("Mirror feature missing operation or removeOriginal for body mirror")
             push_kv(*seq, KEY["REMOVE_ORIGINAL"], 1 if remove_original else 0, 0.0, 0)
+            push_kv(*seq,KEY['MIRROR_OP'], OP_ID[operation], 0.0, 0)
+
         push_kv(*seq, KEY["MIRROR_PLANE_OX"], 0, mirror_plane_point.x, 1)
         push_kv(*seq, KEY["MIRROR_PLANE_OY"], 0, mirror_plane_point.y, 1)
         push_kv(*seq, KEY["MIRROR_PLANE_OZ"], 0, mirror_plane_point.z, 1)

@@ -79,7 +79,7 @@ def get_face_plane(face) -> Tuple[Tuple[float,float,float], Tuple[float, float, 
         (_round_val(normal_vec.X), _round_val(normal_vec.Y), _round_val(normal_vec.Z)),
     )
 
-def get_axis_from_face(face) -> Tuple[Tuple[float,float,float], Tuple[float, float, float]]:
+def get_axis_from_face(face):
     """尝试从面上获取一个轴线表示（点+方向），仅适用于具有轴线的曲面类型"""
     st = getattr(face, "SurfaceType", None)
     if st is None:
@@ -89,10 +89,10 @@ def get_axis_from_face(face) -> Tuple[Tuple[float,float,float], Tuple[float, flo
     axis_vector = None
     if st == "kCylinderSurface" or st == "kConeSurface" or st == "kTorusSurface":
         cylinder = face.Geometry
-        base_point = cylinder.BasePoint
+        base_point = cylinder.BasePoint if st != "kTorusSurface" else cylinder.CenterPoint 
         axis_vector = cylinder.AxisVector
     else:
-        raise ValueError("Face surface type does not have an axis line")
+        return None,None
 
     
     return (
@@ -128,19 +128,21 @@ def collect_face_metadata(face, tol: float = 1e-3) -> dict:
     axis_info = None
     try:
         axis_point, axis_dir = get_axis_from_face(face)
-        axis_info = {
-            "point": {
-                "x": axis_point[0],
-                "y": axis_point[1],
-                "z": axis_point[2],
-            },
-            "direction": {
-                "x": axis_dir[0],
-                "y": axis_dir[1],
-                "z": axis_dir[2],
+        if axis_point is not None and axis_dir is not None:
+            axis_info = {
+                "point": {
+                    "x": axis_point[0],
+                    "y": axis_point[1],
+                    "z": axis_point[2],
+                },
+                "direction": {
+                    "x": axis_dir[0],
+                    "y": axis_dir[1],
+                    "z": axis_dir[2],
+                }
             }
-        }
-    except Exception:
+    except Exception as e:
+        print(f"[debug] Failed to get axis from face: {e}")
         pass  # 忽略无法提取轴线的情况
 
     plane_info = None
