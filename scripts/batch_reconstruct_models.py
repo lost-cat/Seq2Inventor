@@ -46,8 +46,9 @@ def _load_features(json_path: str) -> List[Dict[str, Any]]:
 
 
 def _save_step(part_doc, ipt_path: Path, i: int, is_last: bool) -> None:
+    
     if not is_last:
-        ipt_path = ipt_path / f"_{i:03d}.ipt"
+        ipt_path = ipt_path.with_name(f"{ipt_path.stem}_step_{i}.ipt")
     try:
         part_doc.SaveAs(str(ipt_path), False)
     except Exception as e:
