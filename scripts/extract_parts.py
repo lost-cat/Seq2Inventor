@@ -1,6 +1,7 @@
 
 from __future__ import annotations
 from pathlib import Path
+import sys
 # Ensure project root is importable when running as a script
 ROOT_DIR = Path(__file__).resolve().parent.parent
 if str(ROOT_DIR) not in sys.path:
@@ -8,7 +9,7 @@ if str(ROOT_DIR) not in sys.path:
 import argparse
 import os
 import shutil
-import sys
+
 import tarfile
 import zipfile
 

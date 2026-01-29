@@ -338,6 +338,8 @@ class FeatureEncoder:
     ):
         curve = ent.get("Curve") or {}
         c = curve.get("center", {})
+        sp = ent.get("StartSketchPoint", {})
+        ep = ent.get("EndSketchPoint", {})
         seq = self.seq
         add_instr_boundary(*seq, begin=True)
         push_kv(*seq, KEY["TYPE"], TYPE_ID["Arc"], 0.0, 0)
@@ -346,6 +348,13 @@ class FeatureEncoder:
         push_kv(*seq, KEY["R"], 0, rnd(curve.get("radius", 0)), 1)
         push_kv(*seq, KEY["SA"], 0, rnd(curve.get("startAngle", 0)), 1)
         push_kv(*seq, KEY["SW"], 0, rnd(curve.get("sweepAngle", 0)), 1)
+        push_kv(*seq,KEY['SPX'],0, rnd(sp.get("x",0)),1)
+        push_kv(*seq,KEY['SPY'],0, rnd(sp.get("y",0)),1)
+        push_kv(*seq,KEY['EPX'],0, rnd(ep.get("x",0)),1)
+        push_kv(*seq,KEY['EPY'],0, rnd(ep.get("y",0)),1)
+
+
+
         add_instr_boundary(*seq, begin=False)
 
     def add_circle(
@@ -1263,11 +1272,12 @@ class FeatureEncoder:
                     r = float(ekeys.get("R", 0.0))
                     sa = float(ekeys.get("SA", 0.0))
                     sw = float(ekeys.get("SW", 0.0))
-                    sp = {"x": cx + r * math.cos(sa), "y": cy + r * math.sin(sa)}
-                    ep = {
-                        "x": cx + r * math.cos(sa + sw),
-                        "y": cy + r * math.sin(sa + sw),
-                    }
+                    sp = {}
+                    sp["x"] = float(ekeys.get("SPX", 0.0))
+                    sp["y"] = float(ekeys.get("SPY", 0.0))
+                    ep = {}
+                    ep["x"] = float(ekeys.get("EPX", 0.0))
+                    ep["y"] = float(ekeys.get("EPY", 0.0))
                     path_entities.append(
                         {
                             "CurveType": "kCircularArcCurve2d",
