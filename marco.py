@@ -25,8 +25,6 @@ KEY = {
     "YZ": 31,
     "REFER_PLANE_IDX": 32,
     # sketch entities
-    "PathEnd": 35,
-    "PathStart": 36,
     "PX":38,
     "PY":39,
     "SPX": 40,
@@ -175,6 +173,8 @@ TYPE_ID = {
     "Arc": 3,
     "Circle": 4,
     "Point": 5,
+    "PathEnd": 6,
+    "PathStart": 7,
     "SketchEnd": 9,
     "Extrude": 10,
     "Revolve": 11,
