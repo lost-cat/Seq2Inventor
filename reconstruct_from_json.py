@@ -208,9 +208,13 @@ def _rebuild_extrude(
         ext_def.SetDistanceExtent(dist["value"], dir_const)
 
         if feat["isTwoDirectional"]:
-            dist2 = extent.get("distanceTwo")
-            if dist2 is not None:
-                ext_def.SetDistanceExtentTwo(dist2["value"])
+            ext2_dict = feat.get("extentTwo")
+            #dist2 = extent.get("distanceTwo")
+            if ext2_dict is not None:
+                #ext_def.SetDistanceExtentTwo(dist2["value"])
+                dist2 = ext2_dict.get("distance")
+                if dist2:
+                    ext_def.SetDistanceExtentTwo(dist2["value"])
     elif ext_type == "kToExtent":
         #   d['type'] = "ToExtent"
         # d["toEntity"] = self.to_entity
